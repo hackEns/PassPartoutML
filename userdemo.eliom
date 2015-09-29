@@ -6,8 +6,7 @@
 }}
 open Config
 open Cas
-
-exception CASConnectionError
+open Lwt
 
 module Userdemo_app =
   Eliom_registration.App (
@@ -28,8 +27,7 @@ let _ =
 		~path:[]
 		~get_params:Eliom_parameter.(string "ticket")
 		(fun ticket () ->
-			try
-			begin
+			catch begin fun () ->
 				let cas_url = cas_server ^ "/serviceValidate?ticket=" ^ ticket ^ "&service=" ^ cas_service in
 				(download_data cas_url >>= fun (cas_data) ->
 				
@@ -41,6 +39,8 @@ let _ =
 					]))
 					)
 			end
-			with
-			| CASConnectionError -> send_error "Could not connect to the CAS to check the authentification."
+			begin
+			function
+			| CASConnectionError(error) -> send_error ("Could not connect to the CAS to check the authentification: " ^ error)
+			end
 		)
