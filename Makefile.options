@@ -3,7 +3,7 @@
 #           SETTINGS FOR THE ELIOM PROJECT userdemo
 #----------------------------------------------------------------------
 
-PROJECT_NAME := userdemo
+PROJECT_NAME := passpartout
 
 # Source files for the server
 SERVER_FILES := config.ml user.ml cas.ml dumb_password.ml $(wildcard *.eliomi *.eliom)

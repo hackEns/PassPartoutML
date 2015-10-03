@@ -2,7 +2,6 @@ _client
 _deps
 local
 _server
-userdemo.conf.in
 *.swp
 *.swo
 .depend
