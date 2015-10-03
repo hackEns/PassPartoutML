@@ -15,6 +15,7 @@ module Userdemo_app =
     end)
 
 module CasModule = Cas.Cas(Userdemo_app)
+module DumbPasswordModule = Dumb_password.DumbPassword(Userdemo_app)
 
 open Eliom_tools.F
 
@@ -26,7 +27,7 @@ let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/c
 
 (* let _ = f (cas_xml_get_login data_debug_login) *)
 
-let require = User.require [CasModule.main_service, "CAS"]
+let require = User.require [CasModule.main_service, "CAS"; DumbPasswordModule.main_service, "Password"]
 
 let _ = 
 	Userdemo_app.register_service
