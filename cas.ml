@@ -82,7 +82,7 @@ let send_error str =
         (html ~title:"error" (body [pcdata ("Error: " ^ str)]))
 
 let service_path = ["login"; "cas"]
-let service_url = List.fold_left (fun a b -> if a <> "" then a ^ "/" ^ b else b) "" service_path
+let service_url = List.fold_left (fun a b -> a ^ "/" ^ b) "" service_path
 let _ = Ocsigen_messages.errlog service_url
 
 let main_service =
@@ -91,7 +91,7 @@ let main_service =
 		~get_params:Eliom_parameter.(string "ticket")
 		(fun ticket () ->
 		 try_lwt
-			 let cas_url = cas_server ^ "serviceValidate?ticket=" ^ ticket ^ "&service=" ^ cas_service ^ service_url in
+			 let cas_url = cas_server ^ "/serviceValidate?ticket=" ^ ticket ^ "&service=" ^ cas_service ^ service_url in
 			 lwt cas_data = download_data cas_url in 
 			 let user_id = cas_xml_get_login cas_data in
 			 lwt () = User.perform_login user_id in

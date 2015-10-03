@@ -36,5 +36,14 @@ let _ =
 		(fun () () ->
 			require
 			"logged"
-			(fun () -> return (html ~title:"restricted area" (body [ h2 [pcdata (User.get_login ())] ])))
+			(fun () -> return
+				(html
+				 ~title:"restricted area"
+				 ~js:[["js";"sjcl.js"]]
+				 (body [
+				 	h2 [
+						pcdata (User.get_login ())
+						]
+					]
+				)))
 		)
