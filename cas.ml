@@ -1,5 +1,14 @@
+module Cas (App: Eliom_registration.ELIOM_APPL) = struct
+
 open Lwt
+open Config
 open Ocsigen_messages
+open Eliom_lib
+open Eliom_content
+open Html5.D
+open Html5.F
+open Eliom_tools.F
+
 
 exception CASConnectionError of string
 exception CASDataError of string
@@ -67,3 +76,44 @@ let cas_xml_is_successful_debug func data =
 	match xml with
 	| Element(a, t, children) -> List.map (fun (a, b) -> func a; func b) t
 
+let send_error str =
+	Ocsigen_messages.errlog str;
+	Lwt.return
+        (html ~title:"error" (body [pcdata ("Error: " ^ str)]))
+
+let service_path = ["login"; "cas"]
+let service_url = List.fold_left (fun a b -> if a <> "" then a ^ "/" ^ b else b) "" service_path
+let _ = Ocsigen_messages.errlog service_url
+
+let _ =
+	App.register_service
+		~path:service_path
+		~get_params:Eliom_parameter.(string "ticket")
+		(fun ticket () ->
+		 try_lwt
+			 let cas_url = cas_server ^ "serviceValidate?ticket=" ^ ticket ^ "&service=" ^ cas_service ^ service_url in
+			 lwt cas_data = download_data cas_url in 
+			 let user_id = cas_xml_get_login cas_data in
+			 lwt () = User.perform_login user_id in
+
+			 return (html
+				 ~title:"userdemo"
+				 ~css:[["css";"userdemo.css"]]
+				 (body [
+				  h2 [pcdata cas_data];
+				 ]))
+		 with
+		 | CASConnectionError(error) -> send_error ("Could not connect to the CAS to check the authentification: " ^ error)
+		 | CASDataError(error) -> send_error ("CAS data not recognized: " ^ error)
+		);
+	Eliom_registration.Redirection.register_service
+		~path:service_path
+		~options:`TemporaryRedirect
+		~get_params:Eliom_parameter.(unit)
+		(fun () () ->
+			return (Eliom_service.preapply
+				(Eliom_service.Http.external_service ~prefix:cas_server ~path:["login"] ~get_params:Eliom_parameter.(string "service") ())
+				(cas_service ^ service_url))
+		)
+
+end
