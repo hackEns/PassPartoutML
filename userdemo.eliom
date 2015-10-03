@@ -49,12 +49,7 @@ let _ =
 					let user_id = cas_xml_get_login cas_data in
 					Eliom_reference.Volatile.set user_id_ref (Some user_id);
 					
-					(* for now every user is logged in *)
-	(*				Eliom_state.set_volatile_data_session_group
-						~scope:Eliom_common.default_session_scope
-						"logged in";*)
-				
-					Lwt.return (html
+					return (html
 						~title:"userdemo"
 						~css:[["css";"userdemo.css"]]
 						(body [
