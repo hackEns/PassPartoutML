@@ -29,7 +29,6 @@ type xml_tree_checker =
 	| Attribute of string * string
 	| InlineData
 
-
 let rec get_xml_value xml tree = match (xml, tree) with
 	| Simplexmlparser.Element(tag, _, children), Node(tag2, child_tree) when tag = tag2 ->
 		begin
@@ -57,7 +56,10 @@ let rec get_xml_value xml tree = match (xml, tree) with
  * Throws a CASDataError if anything wrong occurs. *)
 let cas_xml_get_login data =
 	let xml::[] = Simplexmlparser.xmlparser_string data in
-	get_xml_value xml (Node("cas:serviceResponse", Attribute("cas:authenticationSuccess", "user")))
+	try
+		get_xml_value xml (Node("cas:serviceResponse", Node("cas:authenticationSuccess", Node("cas:user", InlineData))))
+	with
+	| XMLDataError -> raise (CASDataError data)
 
 		
 let cas_xml_is_successful_debug func data =
