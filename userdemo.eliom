@@ -35,25 +35,21 @@ let _ =
 		~path:[]
 		~get_params:Eliom_parameter.(string "ticket")
 		(fun ticket () ->
-			catch begin fun () ->
+			try_lwt
 				let cas_url = cas_server ^ "/serviceValidate?ticket=" ^ ticket ^ "&service=" ^ cas_service in
-				(download_data cas_url >>= fun (cas_data) ->
-					
-					(* for now every user is logged in *)
-					Eliom_state.set_volatile_data_session_group
-						~scope:Eliom_common.default_session_scope
-						"logged in";
+				lwt cas_data = download_data cas_url in 
 				
-					Lwt.return (html
-						~title:"userdemo"
-						~css:[["css";"userdemo.css"]]
-						(body [
-							 h2 [pcdata cas_data];
-					]))
-					)
-			end
-			begin
-			function
+				(* for now every user is logged in *)
+				Eliom_state.set_volatile_data_session_group
+					~scope:Eliom_common.default_session_scope
+					"logged in";
+			
+				Lwt.return (html
+					~title:"userdemo"
+					~css:[["css";"userdemo.css"]]
+					(body [
+						 h2 [pcdata cas_data];
+				]))
+			with
 			| CASConnectionError(error) -> send_error ("Could not connect to the CAS to check the authentification: " ^ error)
-			end
 		)
