@@ -30,11 +30,6 @@ let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/c
 
 (* let _ = f (cas_xml_get_login data_debug_login) *)
 
-let user_id_ref = 
-	Eliom_reference.Volatile.eref
-    	~scope:Eliom_common.default_session_scope
-		None
-
 let _ =
 	Userdemo_app.register_service 
 		~path:[]
@@ -47,7 +42,7 @@ let _ =
 					let cas_url = cas_server ^ "/serviceValidate?ticket=" ^ ticket ^ "&service=" ^ cas_service in
 					lwt cas_data = download_data cas_url in 
 					let user_id = cas_xml_get_login cas_data in
-					Eliom_reference.Volatile.set user_id_ref (Some user_id);
+					lwt () = User.perform_login user_id in
 					
 					return (html
 						~title:"userdemo"
@@ -59,7 +54,8 @@ let _ =
 				| CASConnectionError(error) -> send_error ("Could not connect to the CAS to check the authentification: " ^ error)
 				| CASDataError(error) -> send_error ("CAS data not recognized: " ^ error)
 				end
-			| None -> match Eliom_reference.Volatile.get user_id_ref with
-				| None -> return (html ~title:"" (body [ h2 [pcdata "none"] ]))
-				| Some logi -> return (html ~title:"" (body [ h2 [pcdata logi] ]))
+			| None -> User.require
+						"logged"
+						(fun () -> return (html ~title:"" (body [ h2 [pcdata (User.get_login ())] ])))
+						(fun () -> return (html ~title:"" (body [ h2 [pcdata "none"] ])))
 		)

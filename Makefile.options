@@ -6,7 +6,7 @@
 PROJECT_NAME := userdemo
 
 # Source files for the server
-SERVER_FILES := config.ml cas.ml $(wildcard *.eliomi *.eliom)
+SERVER_FILES := config.ml cas.ml user.ml $(wildcard *.eliomi *.eliom)
 # Source files for the client
 CLIENT_FILES := $(wildcard *.eliomi *.eliom)
 
