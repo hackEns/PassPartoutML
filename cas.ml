@@ -85,7 +85,7 @@ let service_path = ["login"; "cas"]
 let service_url = List.fold_left (fun a b -> if a <> "" then a ^ "/" ^ b else b) "" service_path
 let _ = Ocsigen_messages.errlog service_url
 
-let _ =
+let main_service =
 	App.register_service
 		~path:service_path
 		~get_params:Eliom_parameter.(string "ticket")

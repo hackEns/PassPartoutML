@@ -15,8 +15,6 @@ module Userdemo_app =
     end)
 
 module CasModule = Cas.Cas(Userdemo_app)
-open CasModule
-
 
 open Eliom_tools.F
 
@@ -28,14 +26,14 @@ let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/c
 
 (* let _ = f (cas_xml_get_login data_debug_login) *)
 
-let _ = User.register_login_service CasModule.service_url
+let require = User.require [CasModule.main_service, "CAS"]
 
 let _ = 
 	Userdemo_app.register_service
 		~path:["restricted_area"]
 		~get_params: Eliom_parameter.unit
 		(fun () () ->
-			User.require
+			require
 			"logged"
 			(fun () -> return (html ~title:"restricted area" (body [ h2 [pcdata (User.get_login ())] ])))
 		)
