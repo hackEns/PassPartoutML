@@ -3,6 +3,8 @@
   open Eliom_content
   open Html5.D
   open Html5.F
+open Dom
+open Dom_html
 }}
 open Config
 open Lwt
@@ -11,7 +13,7 @@ open Ocsigen_messages
 module Userdemo_app =
   Eliom_registration.App (
     struct
-      let application_name = "userdemo"
+      let application_name = "passpartout"
     end)
 
 module CasModule = Cas.Cas(Userdemo_app)
@@ -31,19 +33,21 @@ let require = User.require [CasModule.main_service, "CAS"; DumbPasswordModule.ma
 
 let _ = 
 	Userdemo_app.register_service
-		~path:["restricted_area"]
+		~path:[]
 		~get_params: Eliom_parameter.unit
 		(fun () () ->
 			require
 			"logged"
-			(fun () -> return
+			(fun () ->
+			let el = p [pcdata (User.get_login ()); pcdata "test2"] in
+			let _ =  {unit{appendChild (document##body) (document##createTextNode( Js.string "some text" ));}} in
+
+			return
 				(html
 				 ~title:"restricted area"
 				 ~js:[["js";"sjcl.js"]]
 				 (body [
-				 	h2 [
-						pcdata (User.get_login ())
-						]
+				 	el
 					]
 				)))
 		)
