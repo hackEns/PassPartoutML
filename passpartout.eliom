@@ -2,7 +2,7 @@
   open Eliom_lib
   open Eliom_content
   open Html5.D
-  open Html5.F
+(*  open Html5.F*)
 open Dom
 open Dom_html
 }}
@@ -19,7 +19,7 @@ module Userdemo_app =
 module CasModule = Cas.Cas(Userdemo_app)
 module DumbPasswordModule = Dumb_password.DumbPassword(Userdemo_app)
 
-open Eliom_tools.F
+open Eliom_tools.D
 
 let f (a:string) = console (fun() -> a)
 
@@ -31,6 +31,20 @@ let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/c
 
 let require = User.require [CasModule.main_service, "CAS"; DumbPasswordModule.main_service, "Password"]
 
+{client{
+	let create_keyring_item s =
+		let item_li = createLi document in
+		appendChild item_li (document##createTextNode (Js.string s));
+		item_li
+	
+	let load_keyrings keyring_list =
+		List.iter (fun s ->
+			let item_li = create_keyring_item s in
+			appendChild keyring_list item_li;
+			) (Engine.get_keyring_list ())
+
+}}
+
 let _ = 
 	Userdemo_app.register_service
 		~path:[]
@@ -39,15 +53,9 @@ let _ =
 			require
 			"logged"
 			(fun () ->
-			let el = p [pcdata (User.get_login ()); pcdata "test2"] in
-			let _ =  {unit{appendChild (document##body) (document##createTextNode( Js.string "some text" ));}} in
+				let keyring_list = ul [] in
+				let _ =  {unit{ load_keyrings (Eliom_content.Html5.To_dom.of_ul %keyring_list) }} in
 
-			return
-				(html
-				 ~title:"restricted area"
-				 ~js:[["js";"sjcl.js"]]
-				 (body [
-				 	el
-					]
-				)))
+				return (Template.make_page [keyring_list])
+			)
 		)

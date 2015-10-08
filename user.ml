@@ -6,6 +6,8 @@ open Html5.D
 open Html5.F
 open Eliom_tools.F
 
+exception Not_logged_in
+
 let user_id_ref = 
 	Eliom_reference.Volatile.eref
     	~scope:Eliom_common.default_session_scope
@@ -42,6 +44,7 @@ let perform_login login =
 	| Not_found -> add permission_table login ["logged"]
 
 let get_login () =
-	let Some login = Eliom_reference.Volatile.get user_id_ref in
-	login
+	match Eliom_reference.Volatile.get user_id_ref with
+	| Some login -> login
+	| _ -> raise Not_logged_in
 
