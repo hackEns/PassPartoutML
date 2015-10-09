@@ -31,19 +31,41 @@ let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/c
 
 let require = User.require [CasModule.main_service, "CAS"; DumbPasswordModule.main_service, "Password"]
 
+
+let service_stub param func =
+  Eliom_registration.Ocaml.register_post_coservice'
+    ~post_params:param
+    (fun () p -> User.ensure_login () >>= fun () -> Lwt.return p >>= func)
+
+let get_keyring_service = service_stub (Eliom_parameter.string "keyring_name") (fun keyring_name ->
+	User.ensure_role keyring_name >>=
+	(fun () -> Lwt.return (Engine.get_keyring_data keyring_name)))
+
+
+let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Lwt.return (Engine.get_keyring_list ()))
+
+
 {client{
 	let create_keyring_item s =
 		let item_li = createLi document in
 		appendChild item_li (document##createTextNode (Js.string s));
 		item_li
+
+	let main_frame () = getElementById "main-frame"
 	
-	let load_keyrings keyring_list =
-		List.iter (fun s ->
+	let load_keyrings keyring_list_ul =
+		lwt keyring_list = Eliom_client.call_ocaml_service ~service:%keyring_list_service () () in
+		Lwt.return (List.iter (fun s ->
 			let item_li = create_keyring_item s in
-			appendChild keyring_list item_li;
-			) (Engine.get_keyring_list ())
+			Lwt_js_events.mousedowns item_li (fun _ _ ->
+				let child = list_of_nodeList((main_frame())##childNodes) in
+				List.map (fun c -> ((main_frame ())##removeChild(c))) child;
+				Lwt.return (appendChild (main_frame()) (document##createTextNode (Js.string "clicked"))));
+				appendChild keyring_list_ul item_li
+			) (keyring_list))
 
 }}
+
 
 let _ = 
 	Userdemo_app.register_service
@@ -54,8 +76,8 @@ let _ =
 			"logged"
 			(fun () ->
 				let keyring_list = ul [] in
-				let _ =  {unit{ load_keyrings (Eliom_content.Html5.To_dom.of_ul %keyring_list) }} in
+				let _ =  {unit{ let _  = load_keyrings (Eliom_content.Html5.To_dom.of_ul %keyring_list) in () }} in
 
-				return (Template.make_page [keyring_list])
+				return (Template.make_page [keyring_list; div ~a:[a_id "main-frame"] []])
 			)
 		)
