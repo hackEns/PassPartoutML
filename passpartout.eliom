@@ -52,17 +52,29 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Lwt.re
 		item_li
 
 	let main_frame () = getElementById "main-frame"
+
+	let clear_main_frame () = 
+		let child = list_of_nodeList((main_frame())##childNodes) in
+		List.iter (fun c -> let _ = ((main_frame ())##removeChild(c)) in ()) child
+	
+	let load_keyring keyring _ _ = 
+		clear_main_frame ();
+		
+		lwt keyring_data = Eliom_client.call_ocaml_service ~service:%get_keyring_service () keyring in
+		let () = appendChild (main_frame()) (document##createTextNode (Js.string keyring_data)) in
+		let () = appendChild (main_frame()) (document##createTextNode (Js.string "clicked")) in
+		
+		Lwt.return ()
 	
 	let load_keyrings keyring_list_ul =
 		lwt keyring_list = Eliom_client.call_ocaml_service ~service:%keyring_list_service () () in
-		Lwt.return (List.iter (fun s ->
-			let item_li = create_keyring_item s in
-			Lwt_js_events.mousedowns item_li (fun _ _ ->
-				let child = list_of_nodeList((main_frame())##childNodes) in
-				List.map (fun c -> ((main_frame ())##removeChild(c))) child;
-				Lwt.return (appendChild (main_frame()) (document##createTextNode (Js.string "clicked"))));
+		let _ = List.iter (
+			fun s ->
+				let item_li = create_keyring_item s in
+				Lwt_js_events.mousedowns item_li (load_keyring s);
 				appendChild keyring_list_ul item_li
-			) (keyring_list))
+			) (keyring_list) in
+		Lwt.return ()
 
 }}
 
