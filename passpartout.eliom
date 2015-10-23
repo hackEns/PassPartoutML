@@ -29,7 +29,7 @@ let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/c
 
 (* let _ = f (cas_xml_get_login data_debug_login) *)
 
-let require = User.require [CasModule.main_service, "CAS"; DumbPasswordModule.main_service, "Password"]
+let require = User.require [CasModule.main_service, "cas"; DumbPasswordModule.main_service, "password"]
 
 
 let service_stub param func =
@@ -46,6 +46,25 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Lwt.re
 
 
 {client{
+
+	let clear elt = 
+		let child = list_of_nodeList(elt##childNodes) in
+		List.iter (fun c -> let _ = (elt##removeChild(c)) in ()) child
+
+	let loading_count = ref 0
+
+	let update_loading_status () =
+		let loading_p = getElementById "loading-p" in
+		clear loading_p;
+		if !loading_count > 0 then
+			appendChild loading_p (Widgets.label "loading…")
+
+	let start_loading () =
+		incr loading_count; update_loading_status ()
+	
+	let end_loading () =
+		decr loading_count; update_loading_status (); Lwt.return ()
+
 	let create_keyring_item s =
 		let item_li = createLi document in
 		appendChild item_li (document##createTextNode (Js.string s));
@@ -53,29 +72,53 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Lwt.re
 
 	let main_frame () = getElementById "main-frame"
 
-	let clear_main_frame () = 
-		let child = list_of_nodeList((main_frame())##childNodes) in
-		List.iter (fun c -> let _ = ((main_frame ())##removeChild(c)) in ()) child
+	let clear_main_frame () = clear (main_frame ())
+	
+	let get_from_server service param = Eliom_client.call_ocaml_service ~service:service () param
 	
 	let load_keyring keyring _ _ = 
-		clear_main_frame ();
+		clear_main_frame (); start_loading ();
 		
-		lwt keyring_data = Eliom_client.call_ocaml_service ~service:%get_keyring_service () keyring in
+		lwt keyring_data = get_from_server %get_keyring_service keyring in
 		let () = appendChild (main_frame()) (document##createTextNode (Js.string keyring_data)) in
 		let () = appendChild (main_frame()) (document##createTextNode (Js.string "clicked")) in
 		
-		Lwt.return ()
+		end_loading ()
 	
 	let load_keyrings keyring_list_ul =
-		lwt keyring_list = Eliom_client.call_ocaml_service ~service:%keyring_list_service () () in
+		start_loading ();
+		lwt keyring_list = get_from_server %keyring_list_service () in
 		let _ = List.iter (
 			fun s ->
 				let item_li = create_keyring_item s in
 				Lwt_js_events.mousedowns item_li (load_keyring s);
 				appendChild keyring_list_ul item_li
 			) (keyring_list) in
-		Lwt.return ()
+		end_loading ()
+}}
 
+let user_list_service = service_stub (Eliom_parameter.unit) (fun () ->
+	User.ensure_role "" >>= User.list_users)
+
+{client{
+	
+	let add_other_links keyring_list_ul =
+		let item_li = create_keyring_item "users" in
+		appendChild keyring_list_ul item_li;
+		Lwt_js_events.mousedowns item_li (fun _ _ ->
+			start_loading ();
+			clear_main_frame ();
+			lwt (permission_list, user_list) = get_from_server %user_list_service () in
+			let table_type = List.fold_right (fun p table_type ->
+				Widgets.grid_editable_boolean (fun s -> ()) table_type) permission_list Widgets.grid_header in
+			let table_type = Widgets.grid_string table_type in
+			let user_list = List.map (fun (user, perm) ->
+				(Widgets.TextCell(user)) :: List.map (fun p -> Widgets.BoolCell(List.mem p perm)) permission_list
+			) user_list in
+			let permission_header = List.map (fun s -> Widgets.TextCell s) permission_list in
+			appendChild (main_frame ()) (Widgets.grid table_type user_list permission_header);
+			end_loading ();
+		)
 }}
 
 
@@ -88,7 +131,11 @@ let _ =
 			"logged"
 			(fun () ->
 				let keyring_list = ul [] in
-				let _ =  {unit{ let _  = load_keyrings (Eliom_content.Html5.To_dom.of_ul %keyring_list) in () }} in
+				let _ =  {unit{
+					let main_list = (Eliom_content.Html5.To_dom.of_ul %keyring_list) in
+					let _ = load_keyrings main_list in
+					let _ = add_other_links main_list in
+					()}} in
 
 				return (Template.make_page [keyring_list; div ~a:[a_id "main-frame"] []])
 			)

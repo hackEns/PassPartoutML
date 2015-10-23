@@ -10,9 +10,12 @@ let top_wrapper () =
 	| User.Not_logged_in ->
 		div [ p [ pcdata "Not logged in"]]
 
+let loading_part () =
+	div ~a:[a_id "loading-wrapper"] [ p ~a:[a_id "loading-p"] []]
+
 let make_page l = html
 				 ~title:"restricted area"
 				 ~js:[["js";"sjcl.js"]]
-				 (body (top_wrapper ()::l)
+				 (body (top_wrapper ()::loading_part ()::l)
 				)
 

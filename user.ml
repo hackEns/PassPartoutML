@@ -16,6 +16,8 @@ let user_id_ref =
 
 let permission_table = (open_table "permissions":string list table)
 
+let list_users () = fold_table (fun s p (q, l) -> return (q, ((s, p)::l))) permission_table (["perm"], [])
+
 let display_auths_mechanism services =
 	let auths_list = List.map (fun (service, name) -> (a service [pcdata name] ())) services in
 	return (html ~title:"login needed" (body [ p auths_list ]))
