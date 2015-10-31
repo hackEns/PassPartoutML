@@ -15,8 +15,21 @@ let user_id_ref =
 		None
 
 let permission_table = (open_table "permissions":string list table)
+let permission_list_table = (open_table "permissions_list":unit table)
 
-let list_users () = fold_table (fun s p (q, l) -> return (q, ((s, p)::l))) permission_table (["perm"], [])
+let register_permission p = 
+	try_lwt
+		lwt _ = find permission_list_table p in
+		return ()
+	with
+	| Not_found -> add permission_list_table p ()
+
+(* this creates an lwt thread, so once it execution is not guaranteed *)
+let _ = register_permission "logged"
+
+let list_users () =
+	lwt all_permissions = fold_table (fun s _ l -> return (s::l)) permission_list_table [] in
+	fold_table (fun s p (q, l) -> return (q, ((s, p)::l))) permission_table (all_permissions, [])
 
 let display_auths_mechanism services =
 	let auths_list = List.map (fun (service, name) -> (a service [pcdata name] ())) services in

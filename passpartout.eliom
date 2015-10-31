@@ -42,7 +42,7 @@ let get_keyring_service = service_stub (Eliom_parameter.string "keyring_name") (
 	(fun () -> Lwt.return (Engine.get_keyring_data keyring_name)))
 
 
-let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Lwt.return (Engine.get_keyring_list ()))
+let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine.get_keyring_list ())
 
 
 {client{
