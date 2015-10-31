@@ -100,23 +100,53 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 let user_list_service = service_stub (Eliom_parameter.unit) (fun () ->
 	User.ensure_role "" >>= User.list_users)
 
+(* FIXME: check permissions here *)
+let user_set_permission_service = service_stub (Eliom_parameter.((string "user") ** (string "permission_name") ** (bool "value"))) (fun (user, (perm, value)) ->
+	User.ensure_role "" >>= fun () -> User.set_permission user perm value)
+
+
 {client{
+
+	let widget_new_keyring () =
+		let item_li = createP document in
+		appendChild item_li (document##createTextNode (Js.string "widget"));
+		item_li
 	
-	let add_other_links keyring_list_ul =
-		let item_li = create_keyring_item "users" in
-		appendChild keyring_list_ul item_li;
-		Lwt_js_events.mousedowns item_li (fun _ _ ->
+	let rec load_user_list () =
 			start_loading ();
 			clear_main_frame ();
+
 			lwt (permission_list, user_list) = get_from_server %user_list_service () in
 			let table_type = List.fold_right (fun p table_type ->
-				Widgets.grid_editable_boolean (fun s -> ()) table_type) permission_list Widgets.grid_header in
+				Widgets.grid_editable_boolean (fun s whole_line ->
+					match whole_line with
+					| Widgets.TextCell(user)::q -> begin
+						lwt _ = get_from_server %user_set_permission_service (user, (p, s)) in
+						Lwt.return ()
+					end
+					| _ -> failwith "no id"
+					) table_type) permission_list Widgets.grid_header in
 			let table_type = Widgets.grid_string table_type in
 			let user_list = List.map (fun (user, perm) ->
 				(Widgets.TextCell(user)) :: List.map (fun p -> Widgets.BoolCell(List.mem p perm)) permission_list
 			) user_list in
 			let permission_header = List.map (fun s -> Widgets.TextCell s) permission_list in
 			appendChild (main_frame ()) (Widgets.grid table_type user_list permission_header);
+			end_loading ()
+	
+	let add_other_links keyring_list_ul =
+		let item_li = create_keyring_item "users" in
+		appendChild keyring_list_ul item_li;
+		Lwt_js_events.mousedowns item_li (fun _ _ ->
+			load_user_list ()
+		);
+		
+		let item_li = create_keyring_item "new" in
+		appendChild keyring_list_ul item_li;
+		Lwt_js_events.mousedowns item_li (fun _ _ ->
+			start_loading ();
+			clear_main_frame ();
+			appendChild (main_frame ()) (widget_new_keyring ());
 			end_loading ();
 		)
 }}

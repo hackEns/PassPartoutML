@@ -63,6 +63,14 @@ let ensure_role = function
 			| Not_found -> raise Not_allowed
 
 
+(* *)
+let set_permission login perm value =
+	lwt user_permissions = find permission_table login in
+	if value then
+		if (List.mem perm user_permissions) then return ()
+		else add permission_table login (perm::user_permissions)
+	else
+		add permission_table login (List.filter (fun p -> p <> perm) user_permissions)
 
 (* Save the login in the session variables, load permissions, create them if needed, etc. *)
 let perform_login login =
