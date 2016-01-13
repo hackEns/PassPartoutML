@@ -91,7 +91,10 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 		let _ = List.iter (
 			fun s ->
 				let item_li = create_keyring_item s in
-				Lwt_js_events.mousedowns item_li (load_keyring s);
+				Lwt_js_events.(
+					async (fun () -> 
+						mousedowns item_li (load_keyring s)
+				));
 				appendChild keyring_list_ul item_li
 			) (keyring_list) in
 		end_loading ()
@@ -109,7 +112,9 @@ let user_set_permission_service = service_stub (Eliom_parameter.((string "user")
 
 	let widget_new_keyring () =
 		let item_li = createP document in
-		appendChild item_li (document##createTextNode (Js.string "widget"));
+		appendChild item_li (Widgets.text_entry (Some "keyring") (fun content ->
+			print_string content;
+		));
 		item_li
 	
 	let rec load_user_list () =
@@ -137,10 +142,10 @@ let user_set_permission_service = service_stub (Eliom_parameter.((string "user")
 	let add_other_links keyring_list_ul =
 		let item_li = create_keyring_item "users" in
 		appendChild keyring_list_ul item_li;
-		Lwt_js_events.mousedowns item_li (fun _ _ ->
-			load_user_list ()
-		);
-		
+		Lwt_js_events.(
+			async (fun () ->
+				mousedowns item_li (fun _ _ -> load_user_list ())
+		));
 		let item_li = create_keyring_item "new" in
 		appendChild keyring_list_ul item_li;
 		Lwt_js_events.mousedowns item_li (fun _ _ ->
