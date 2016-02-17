@@ -205,6 +205,10 @@ let _ =
 					update_main_list ()
 					}} in
 
-				return (Template.make_page [div ~a:[a_id "main"] [keyring_list]; div ~a:[a_id "main-frame-wrapper"] [Raw.a ~a:[a_href (Raw.uri_of_string "#main")] []; div ~a:[a_id "main-frame-wrapper2"] [div ~a:[a_id "main-frame"] []]]])
+				return (Template.make_page [div ~a:[a_id "main"] [keyring_list];
+											div ~a:[a_id "main-frame-wrapper"] 
+												[Raw.a ~a:[a_href (Raw.uri_of_string "#main")] [];
+												div ~a:[a_id "main-frame-wrapper2"]
+													[div ~a:[a_id "main-frame"] []]]])
 			)
 		)
