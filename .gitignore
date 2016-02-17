@@ -4,4 +4,5 @@ local
 _server
 *.swp
 *.swo
+*.swn
 .depend
