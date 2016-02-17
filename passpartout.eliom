@@ -200,10 +200,11 @@ let _ =
 			(fun () ->
 				let keyring_list = ul ~a:[a_id "main-menu"] [] in
 				let _ =  {unit{
+					Url.Current.set_fragment "main";
 					menu :=  Some (Eliom_content.Html5.To_dom.of_ul %keyring_list);
 					update_main_list ()
 					}} in
 
-				return (Template.make_page [keyring_list; div ~a:[a_id "main-frame-wrapper"] [Raw.a ~a:[a_href (Raw.uri_of_string "#menu")] []; div ~a:[a_id "main-frame-wrapper2"] [div ~a:[a_id "main-frame"] []]]])
+				return (Template.make_page [div ~a:[a_id "main"] [keyring_list]; div ~a:[a_id "main-frame-wrapper"] [Raw.a ~a:[a_href (Raw.uri_of_string "#main")] []; div ~a:[a_id "main-frame-wrapper2"] [div ~a:[a_id "main-frame"] []]]])
 			)
 		)

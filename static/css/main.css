@@ -85,3 +85,12 @@ a {
 a:active {
 	background-color:transparent;
 }
+
+#main {
+	transition: all 0.25s ease;
+	transform:translate(-80%);
+}
+
+#main:target {
+	transform:translate(-0%);
+}
