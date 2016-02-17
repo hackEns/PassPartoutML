@@ -4,6 +4,8 @@ open Html5.D
 open Dom
 open Dom_html
 
+let (|-) f g x = f (g x)
+
 type grid_cell =
 	| BoolCell of bool
 	| TextCell of string
@@ -26,10 +28,10 @@ let text_entry s cb =
 	let form = createForm document in
 	let input = createInput document in
 	appendChild form input;
-	(*Lwt_js_events.submit form (fun _ _ ->  cb input##value);*)
+	Lwt_js_events.submits form (fun _ _ ->  cb (Js.to_string input##value));
 	match s with
-	| Some s -> (input##value <- (Js.string s); input)
-	| None -> input
+	| Some s -> (input##value <- (Js.string s); form)
+	| None -> form
 
 	
 let clear elt = 
@@ -47,6 +49,22 @@ let custom_div children =
 	let div = createDiv document in
 	List.iter (appendChild div) children;
 	div
+
+let wrap_td elt =
+	let td = createTd document in
+	appendChild td elt; td
+
+let line_to_tr line =
+	let tr = createTr document in
+	List.iter ((appendChild tr) |- wrap_td) line;
+	tr
+	
+
+let lines_to_table lines =
+	let table = createTable document in
+	List.iter ((appendChild table) |- line_to_tr) lines;
+	table
+
 
 
 let grid_header = End
@@ -74,5 +92,6 @@ let grid table_type content header_content =
 		| _ -> failwith "Invalid table"
 	in
 
-	custom_div List.(concat ( map (fun c -> (create_elements c (table_type, c)) ) content))
+	lines_to_table	(List.map (fun c -> create_elements c (table_type, c)) content)
+
 

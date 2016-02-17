@@ -77,13 +77,18 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 	let get_from_server service param = Eliom_client.call_ocaml_service ~service:service () param
 	
 	let load_keyring keyring _ _ = 
-		clear_main_frame (); start_loading ();
+		start_loading (); clear_main_frame ();
 		
-		lwt keyring_data = get_from_server %get_keyring_service keyring in
-		let () = appendChild (main_frame()) (document##createTextNode (Js.string keyring_data)) in
-		let () = appendChild (main_frame()) (document##createTextNode (Js.string "clicked")) in
-		
-		end_loading ()
+		try_lwt
+			lwt keyring_data = get_from_server %get_keyring_service keyring in
+			let () = appendChild (main_frame()) (document##createTextNode (Js.string keyring_data)) in
+			let () = appendChild (main_frame()) (document##createTextNode (Js.string "clicked")) in
+			
+			end_loading ()
+		with
+		| Exception_on_server (s) ->
+			let () = appendChild (main_frame()) (document##createTextNode (Js.string ("server error: " ^ s))) in
+			end_loading ()
 	
 	let load_keyrings keyring_list_ul =
 		start_loading ();
@@ -98,6 +103,9 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 				appendChild keyring_list_ul item_li
 			) (keyring_list) in
 		end_loading ()
+	
+	let menu = ref None
+	
 }}
 
 let user_list_service = service_stub (Eliom_parameter.unit) (fun () ->
@@ -107,15 +115,12 @@ let user_list_service = service_stub (Eliom_parameter.unit) (fun () ->
 let user_set_permission_service = service_stub (Eliom_parameter.((string "user") ** (string "permission_name") ** (bool "value"))) (fun (user, (perm, value)) ->
 	User.ensure_role "" >>= fun () -> User.set_permission user perm value)
 
+let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_name")) (fun keyring_name ->
+	User.ensure_role "create keyring" >>= fun () -> Engine.new_keyring keyring_name)
+
 
 {client{
 
-	let widget_new_keyring () =
-		let item_li = createP document in
-		appendChild item_li (Widgets.text_entry (Some "keyring") (fun content ->
-			print_string content;
-		));
-		item_li
 	
 	let rec load_user_list () =
 			start_loading ();
@@ -139,7 +144,32 @@ let user_set_permission_service = service_stub (Eliom_parameter.((string "user")
 			appendChild (main_frame ()) (Widgets.grid table_type user_list permission_header);
 			end_loading ()
 	
-	let add_other_links keyring_list_ul =
+	let rec update_main_list () =
+		match !menu with
+		| Some main_list ->
+			let _ = clear main_list in
+			let _ = load_keyrings main_list in
+			let _ = add_other_links main_list in
+			()
+		| None -> failwith "no main list to update"
+	and widget_new_keyring () =
+		let item_li = createP document in
+		appendChild item_li (Widgets.text_entry (Some "keyring") (fun content ->
+			start_loading ();
+			clear_main_frame ();
+			try_lwt
+				lwt _ = get_from_server %keyring_create_new_service content in
+				let () = appendChild (main_frame()) (document##createTextNode (Js.string (content ^ " added"))) in
+				let _ = update_main_list () in
+				end_loading ()
+			with
+			| Exception_on_server(s) ->
+				let () = appendChild (main_frame()) (document##createTextNode (Js.string "error adding the keyring, already exists? bad format?")) in
+				end_loading ()
+
+		));
+		item_li
+	and add_other_links keyring_list_ul =
 		let item_li = create_keyring_item "users" in
 		appendChild keyring_list_ul item_li;
 		Lwt_js_events.(
@@ -167,10 +197,9 @@ let _ =
 			(fun () ->
 				let keyring_list = ul [] in
 				let _ =  {unit{
-					let main_list = (Eliom_content.Html5.To_dom.of_ul %keyring_list) in
-					let _ = load_keyrings main_list in
-					let _ = add_other_links main_list in
-					()}} in
+					menu :=  Some (Eliom_content.Html5.To_dom.of_ul %keyring_list);
+					update_main_list ()
+					}} in
 
 				return (Template.make_page [keyring_list; div ~a:[a_id "main-frame"] []])
 			)
