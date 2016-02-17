@@ -33,7 +33,7 @@ let list_users () =
 
 let display_auths_mechanism services =
 	let auths_list = List.map (fun (service, name) -> (a service [pcdata name] ())) services in
-	return (html ~title:"login needed" (body [ p auths_list ]))
+	return (html ~css:[["css";"main.css"]] ~title:"login needed" (body [ p auths_list ]))
 
 let require services role success = match role with
 	| "" -> success ()

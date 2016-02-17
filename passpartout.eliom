@@ -67,7 +67,10 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 
 	let create_keyring_item s =
 		let item_li = createLi document in
-		appendChild item_li (document##createTextNode (Js.string s));
+		let a = createA document in
+		a##href <- Js.string "#main-frame-wrapper";
+		appendChild item_li a;
+		appendChild a (document##createTextNode (Js.string s));
 		item_li
 
 	let main_frame () = getElementById "main-frame"
@@ -195,12 +198,12 @@ let _ =
 			require
 			"logged"
 			(fun () ->
-				let keyring_list = ul [] in
+				let keyring_list = ul ~a:[a_id "main-menu"] [] in
 				let _ =  {unit{
 					menu :=  Some (Eliom_content.Html5.To_dom.of_ul %keyring_list);
 					update_main_list ()
 					}} in
 
-				return (Template.make_page [keyring_list; div ~a:[a_id "main-frame"] []])
+				return (Template.make_page [keyring_list; div ~a:[a_id "main-frame-wrapper"] [Raw.a ~a:[a_href (Raw.uri_of_string "#menu")] []; div ~a:[a_id "main-frame-wrapper2"] [div ~a:[a_id "main-frame"] []]]])
 			)
 		)

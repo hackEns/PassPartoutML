@@ -97,8 +97,8 @@ let main_service =
 			 lwt () = User.perform_login user_id in
 
 			 return (html
-				 ~title:"userdemo"
-				 ~css:[["css";"userdemo.css"]]
+				 ~title:""
+				 ~css:[["css";"main.css"]]
 				 (body [
 				  h2 [pcdata cas_data];
 				 ]))
