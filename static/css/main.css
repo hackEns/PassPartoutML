@@ -12,7 +12,7 @@ body {
 	background-color: #def0ff;
 	width:100%;
 	border-bottom: 1px solid #bed0df;
-	box-shadow:0px 0px 4px #aec0cf;
+	/*box-shadow:0px 0px 4px #aec0cf;*/
 	position:fixed;
 	top:0;
 	left:0;
@@ -96,13 +96,26 @@ a:active {
 }
 
 .text-entry input[type="text"] {
+}
+
+.text-entry input[type="text"], .text-entry input[type="submit"], .text-entry label, .text-entry input[type="password"] {
 	width:100%;
 	border:0;
 	border: 1px solid lightgrey;
 	padding: 0.5em;
 	box-sizing:border-box;
 	font-size:1em;
+	margin-bottom:1em;
+	display:block;
 }
+
+.text-entry label > input[type="checkbox"] {
+	display:block;
+	float:left;
+	margin:0;
+	margin-right:1em;
+}
+
 
 .text-entry input[type="text"]:focus {
 	border-bottom: 1px solid blue;

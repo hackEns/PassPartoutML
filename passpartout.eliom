@@ -50,23 +50,19 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 	let _ = 
 		Js.Unsafe.eval_string "sjcl.random.startCollectors()"
 	
-	(* FIXME: surely there is a faster way to do that, without using the Str package *)
-	let escape_quote s =
-		let r = ref "" in
-		for i = 0 to (String.length s) - 1 do
-			if s.[i] = '\'' then
-			r := !r ^ "\\'"
-			else
-			r := !r ^ (String.make 1 s.[i])
-		done;
-		!r
+	let replace input output content =
+		(Js.Unsafe.coerce content)##replace(input, output)
 
-	let decipher key data =
-		Js.Unsafe.eval_string ("sjcl.decrypt('" ^ (escape_quote key) ^"', '" ^ (escape_quote data) ^"').replace('\\\\\\\'', '\\\'');")
+	exception WrongPassword
+	let decipher key data : string =
+		try
+			Js.to_string ((Js.Unsafe.js_expr "sjcl")##decrypt(Js.string key, Js.string data))
+		with
+		| _ -> raise WrongPassword
 
 
-	let cipher key data =
-		 Js.Unsafe.eval_string ("sjcl.encrypt('" ^ (escape_quote key) ^ "', '" ^ (escape_quote data) ^"');")
+	let cipher key data : string =
+		Js.to_string ((Js.Unsafe.js_expr "sjcl")##encrypt(Js.string key, Js.string data))
 
 
 	let clear elt = 
@@ -105,10 +101,22 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 		start_loading (); clear_main_frame ();
 		
 		try_lwt
-			lwt keyring_data = get_from_server %get_keyring_service keyring in
-			let () = appendChild (main_frame()) (document##createTextNode (decipher "test" (Js.to_string ((cipher "test" keyring_data))))) in
-			let () = appendChild (main_frame()) (document##createTextNode (Js.string "clicked")) in
-			
+			lwt keyring_data_unciphered = get_from_server %get_keyring_service keyring in
+			let keyring_data = cipher "test" keyring_data_unciphered in
+			let entry = Widgets.form Widgets.((string_password "password")) "decrypt" (fun password ->
+				try
+					begin
+					let data = (decipher password keyring_data) in
+					let () = clear_main_frame () in
+					let () = appendChild (main_frame ()) (document##createTextNode (Js.string data)) in
+					Lwt.return ()
+					end
+				with
+				| WrongPassword ->
+					let () = appendChild (main_frame ()) (document##createTextNode (Js.string "wrong_password")) in Lwt.return ()
+				) in
+			let () = appendChild (main_frame ()) entry in
+				
 			end_loading ()
 		with
 		| Exception_on_server (s) ->
@@ -179,20 +187,20 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 		| None -> failwith "no main list to update"
 	and widget_new_keyring () =
 		let item_li = createP document in
-		appendChild item_li (Widgets.text_entry (Some "keyring") (fun content ->
+		let form = Widgets.form Widgets.((string "keyring") ** (string_password "password")) ~autocomplete:false "create new keyring" (fun (keyring, password) ->
 			start_loading ();
 			clear_main_frame ();
 			try_lwt
-				lwt _ = get_from_server %keyring_create_new_service content in
-				let () = appendChild (main_frame()) (document##createTextNode (Js.string (content ^ " added"))) in
+				lwt _ = get_from_server %keyring_create_new_service keyring in
+				let () = appendChild (main_frame()) (document##createTextNode (Js.string (keyring ^ " added"))) in
 				let _ = update_main_list () in
 				end_loading ()
 			with
 			| Exception_on_server(s) ->
 				let () = appendChild (main_frame()) (document##createTextNode (Js.string "error adding the keyring, already exists? bad format?")) in
 				end_loading ()
-
-		));
+			) in
+		appendChild item_li form;
 		item_li
 	and add_other_links keyring_list_ul =
 		let item_li = create_keyring_item "users" in
