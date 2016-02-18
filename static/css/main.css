@@ -94,3 +94,17 @@ a:active {
 #main:target {
 	transform:translate(-0%);
 }
+
+.text-entry input[type="text"] {
+	width:100%;
+	border:0;
+	border: 1px solid lightgrey;
+	padding: 0.5em;
+	box-sizing:border-box;
+	font-size:1em;
+}
+
+.text-entry input[type="text"]:focus {
+	border-bottom: 1px solid blue;
+}
+

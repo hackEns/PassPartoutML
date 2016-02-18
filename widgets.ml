@@ -25,13 +25,16 @@ let label s =
 	span
 
 let text_entry s cb =
+	let div = createDiv document in
+	div##classList##add (Js.string "text-entry");
 	let form = createForm document in
-	let input = createInput document in
+	let input = createInput ~_type:(Js.string "text") document in
+	appendChild div form;
 	appendChild form input;
 	Lwt_js_events.submits form (fun _ _ ->  cb (Js.to_string input##value));
 	match s with
-	| Some s -> (input##value <- (Js.string s); form)
-	| None -> form
+	| Some s -> (input##value <- (Js.string s); div)
+	| None -> div
 
 	
 let clear elt = 
