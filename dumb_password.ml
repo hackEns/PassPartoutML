@@ -41,10 +41,7 @@ let main_service =
 					string_input ~input_type:`Password ~name:password ();
 					string_input ~input_type:`Submit ()
 				]]) () in
-            return (html
-				~css:[["css";"main.css"]]
-                ~title:"login"
-                (body [login_form])))
+            return (Template.make_page [login_form]))
     in
 
 	let post_service = App.register_post_service
@@ -55,7 +52,7 @@ let main_service =
 				lwt real_password = find password_table user in
 				if real_password = password then
 					lwt () = User.perform_login user in
-					return (html ~css:[["css";"main.css"]] ~title:"success" (body [p [pcdata "logged in"]]))
+					return (Template.make_page [p [pcdata "logged in"]])
 				else raise BadPassword
 			with
 			| Not_found | BadPassword -> send_error "bad password"

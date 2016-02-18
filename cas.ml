@@ -79,7 +79,7 @@ let cas_xml_is_successful_debug func data =
 let send_error str =
 	Ocsigen_messages.errlog str;
 	Lwt.return
-        (html ~title:"error" (body [pcdata ("Error: " ^ str)]))
+        (Template.make_page [pcdata ("Error: " ^ str)])
 
 let service_path = ["login"; "cas"]
 let service_url = List.fold_left (fun a b -> a ^ "/" ^ b) "" service_path
@@ -96,12 +96,7 @@ let main_service =
 			 let user_id = cas_xml_get_login cas_data in
 			 lwt () = User.perform_login user_id in
 
-			 return (html
-				 ~title:""
-				 ~css:[["css";"main.css"]]
-				 (body [
-				  h2 [pcdata cas_data];
-				 ]))
+			 return (Template.make_page [ p [pcdata cas_data]; ])
 		 with
 		 | CASConnectionError(error) -> send_error ("Could not connect to the CAS to check the authentification: " ^ error)
 		 | CASDataError(error) -> send_error ("CAS data not recognized: " ^ error)
