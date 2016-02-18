@@ -47,6 +47,28 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 
 {client{
 
+	let _ = 
+		Js.Unsafe.eval_string "sjcl.random.startCollectors()"
+	
+	(* FIXME: surely there is a faster way to do that, without using the Str package *)
+	let escape_quote s =
+		let r = ref "" in
+		for i = 0 to (String.length s) - 1 do
+			if s.[i] = '\'' then
+			r := !r ^ "\\'"
+			else
+			r := !r ^ (String.make 1 s.[i])
+		done;
+		!r
+
+	let decipher key data =
+		Js.Unsafe.eval_string ("sjcl.decrypt('" ^ (escape_quote key) ^"', '" ^ (escape_quote data) ^"').replace('\\\\\\\'', '\\\'');")
+
+
+	let cipher key data =
+		 Js.Unsafe.eval_string ("sjcl.encrypt('" ^ (escape_quote key) ^ "', '" ^ (escape_quote data) ^"');")
+
+
 	let clear elt = 
 		let child = list_of_nodeList(elt##childNodes) in
 		List.iter (fun c -> let _ = (elt##removeChild(c)) in ()) child
@@ -84,7 +106,7 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 		
 		try_lwt
 			lwt keyring_data = get_from_server %get_keyring_service keyring in
-			let () = appendChild (main_frame()) (document##createTextNode (Js.string keyring_data)) in
+			let () = appendChild (main_frame()) (document##createTextNode (decipher "test" (Js.to_string ((cipher "test" keyring_data))))) in
 			let () = appendChild (main_frame()) (document##createTextNode (Js.string "clicked")) in
 			
 			end_loading ()
