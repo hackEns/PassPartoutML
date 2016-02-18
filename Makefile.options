@@ -6,7 +6,7 @@
 PROJECT_NAME := passpartout
 
 # Source files for the server
-SERVER_FILES := config.ml user.ml template.ml cas.ml dumb_password.ml $(wildcard *.eliomi *.eliom)
+SERVER_FILES := config.ml user.ml template.ml auth.ml cas.ml dumb_password.ml $(wildcard *.eliomi *.eliom)
 # Source files for the client
 CLIENT_FILES := widgets.ml $(wildcard *.eliomi *.eliom)
 
@@ -23,7 +23,7 @@ PERSISTENT_DATA_BACKEND = dbm
 
 # Debug application (yes/no): Debugging info in compilation,
 # JavaScript, ocsigenserver
-DEBUG := no
+DEBUG := yes
 
 # User to run server with (make run.*)
 WWWUSER := www-data
