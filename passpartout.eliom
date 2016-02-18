@@ -23,13 +23,13 @@ open Eliom_tools.D
 
 let f (a:string) = console (fun() -> a)
 
-let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'> <cas:authenticationFailure code='INVALID_TICKET'> ticket &#039;ST-6447-Bd3L7XbK14clqffUdp2l-cas&#039; not recognized </cas:authenticationFailure> </cas:serviceResponse>"
+(*let data_debug_login = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'> <cas:authenticationFailure code='INVALID_TICKET'> ticket &#039;ST-6447-Bd3L7XbK14clqffUdp2l-cas&#039; not recognized </cas:authenticationFailure> </cas:serviceResponse>"*)
 
 (*let _ = cas_xml_is_successful_debug f  data_debug_login*)
 
 (* let _ = f (cas_xml_get_login data_debug_login) *)
 
-let require = User.require [CasModule.main_service, "cas"; DumbPasswordModule.main_service, "password"]
+let require = Auth.require [CasModule.main_service, "cas"; DumbPasswordModule.main_service, "password"]
 
 
 let service_stub param func =
@@ -39,10 +39,21 @@ let service_stub param func =
 
 let get_keyring_service = service_stub (Eliom_parameter.string "keyring_name") (fun keyring_name ->
 	User.ensure_role keyring_name >>=
-	(fun () -> Lwt.return (Engine.get_keyring_data keyring_name)))
+	(fun () -> Engine.get_keyring_data keyring_name))
 
 
 let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine.get_keyring_list ())
+	
+
+let user_list_service = service_stub (Eliom_parameter.unit) (fun () ->
+	User.ensure_role "" >>= User.list_users)
+
+(* FIXME: check permissions here *)
+let user_set_permission_service = service_stub (Eliom_parameter.((string "user") ** (string "permission_name") ** (bool "value"))) (fun (user, (perm, value)) ->
+	User.ensure_role "" >>= fun () -> User.set_permission user perm value)
+
+let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_name" ** string "data")) (fun (keyring_name, data) ->
+	User.ensure_role "create keyring" >>= fun () -> Engine.new_keyring keyring_name data)
 
 
 {client{
@@ -101,8 +112,7 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 		start_loading (); clear_main_frame ();
 		
 		try_lwt
-			lwt keyring_data_unciphered = get_from_server %get_keyring_service keyring in
-			let keyring_data = cipher "test" keyring_data_unciphered in
+			lwt keyring_data = get_from_server %get_keyring_service keyring in
 			let entry = Widgets.form Widgets.((string_password "password")) "decrypt" (fun password ->
 				try
 					begin
@@ -138,21 +148,6 @@ let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine
 		end_loading ()
 	
 	let menu = ref None
-	
-}}
-
-let user_list_service = service_stub (Eliom_parameter.unit) (fun () ->
-	User.ensure_role "" >>= User.list_users)
-
-(* FIXME: check permissions here *)
-let user_set_permission_service = service_stub (Eliom_parameter.((string "user") ** (string "permission_name") ** (bool "value"))) (fun (user, (perm, value)) ->
-	User.ensure_role "" >>= fun () -> User.set_permission user perm value)
-
-let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_name")) (fun keyring_name ->
-	User.ensure_role "create keyring" >>= fun () -> Engine.new_keyring keyring_name)
-
-
-{client{
 
 	
 	let rec load_user_list () =
@@ -191,13 +186,13 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			start_loading ();
 			clear_main_frame ();
 			try_lwt
-				lwt _ = get_from_server %keyring_create_new_service keyring in
+				lwt _ = get_from_server %keyring_create_new_service (keyring, (cipher password "")) in
 				let () = appendChild (main_frame()) (document##createTextNode (Js.string (keyring ^ " added"))) in
 				let _ = update_main_list () in
 				end_loading ()
 			with
 			| Exception_on_server(s) ->
-				let () = appendChild (main_frame()) (document##createTextNode (Js.string "error adding the keyring, already exists? bad format?")) in
+				let () = appendChild (main_frame()) (document##createTextNode (Js.string ("error adding the keyring, already exists? bad format? " ^ s))) in
 				end_loading ()
 			) in
 		appendChild item_li form;
