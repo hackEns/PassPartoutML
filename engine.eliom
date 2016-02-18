@@ -7,13 +7,13 @@ let keyring_table = (open_table "keyring":string table)
 
 let get_keyring_list () = fold_table (fun s _ l -> Lwt.return (s::l)) keyring_table []
 
-let get_keyring_data keyring_data = "chop"
+let get_keyring_data keyring_data = find keyring_table keyring_data
 
 (* register the appropriate permissions *)
 let _ = iter_table (fun s _ -> User.register_permission s) keyring_table
 let _ = User.register_permission "create keyring"
 
-let new_keyring name =
+let new_keyring name data =
 	let check_good_name name =
 		for i = 0 to (String.length name) - 1 do
 			if name.[i] < 'A' || name.[i] > 'z' then
@@ -25,7 +25,7 @@ let new_keyring name =
 		lwt _ = find keyring_table name in
 		raise_lwt Keyring_exist
 	with
-	| Not_found -> add keyring_table name ""
+	| Not_found -> (add keyring_table name data; User.register_permission name)
 
 {client{
 
