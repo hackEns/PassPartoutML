@@ -7,11 +7,12 @@ let loading_part () =
 	div ~a:[a_id "loading-wrapper"] [ span ~a:[a_id "loading-p"] []]
 
 let top_wrapper () =
-	try 
-		div ~a:[a_id "header-wrapper"] [ span ~a:[a_id "appname"] [ pcdata "PassPartout"]; span ~a:[a_id "welcome-msg"] [pcdata ("Hello " ^ User.get_login () ^ "!")]; loading_part() ]
-	with 
-	| User.Not_logged_in ->
-		div [ p [ pcdata "Not logged in"]]
+	div ~a:[a_id "header-wrapper"] [ span ~a:[a_id "appname"] [ pcdata "PassPartout"]; 
+		(try 
+			span ~a:[a_id "welcome-msg"] [pcdata ("Hello " ^ User.get_login () ^ "!")]
+		with 
+		| User.Not_logged_in ->	span [ pcdata "Not logged in"]);
+	loading_part ()]
 
 let make_page l = html
 				 ~title:"restricted area"
