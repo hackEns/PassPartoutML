@@ -58,23 +58,6 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 
 {client{
 
-	let _ = 
-		Js.Unsafe.eval_string "sjcl.random.startCollectors()"
-	
-	let replace input output content =
-		(Js.Unsafe.coerce content)##replace(input, output)
-
-	exception WrongPassword
-	let decipher key data : string =
-		try
-			Js.to_string ((Js.Unsafe.js_expr "sjcl")##decrypt(Js.string key, Js.string data))
-		with
-		| _ -> raise WrongPassword
-
-
-	let cipher key data : string =
-		Js.to_string ((Js.Unsafe.js_expr "sjcl")##encrypt(Js.string key, Js.string data))
-
 
 	let clear elt = 
 		let child = list_of_nodeList(elt##childNodes) in
@@ -116,13 +99,13 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			let entry = Widgets.form Widgets.((string_password "password")) "decrypt" (fun password ->
 				try
 					begin
-					let data = (decipher password keyring_data) in
+					let data = (Engine.decipher password keyring_data) in
 					let () = clear_main_frame () in
 					let () = appendChild (main_frame ()) (document##createTextNode (Js.string data)) in
 					Lwt.return ()
 					end
 				with
-				| WrongPassword ->
+				| Engine.WrongPassword ->
 					let () = appendChild (main_frame ()) (document##createTextNode (Js.string "wrong_password")) in Lwt.return ()
 				) in
 			let () = appendChild (main_frame ()) entry in
@@ -186,7 +169,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			start_loading ();
 			clear_main_frame ();
 			try_lwt
-				lwt _ = get_from_server %keyring_create_new_service (keyring, (cipher password "")) in
+				lwt _ = get_from_server %keyring_create_new_service (keyring, (Engine.cipher password "")) in
 				let () = appendChild (main_frame()) (document##createTextNode (Js.string (keyring ^ " added"))) in
 				let _ = update_main_list () in
 				end_loading ()

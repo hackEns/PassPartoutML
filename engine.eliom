@@ -29,9 +29,25 @@ let new_keyring name data =
 
 {client{
 
-(* site * username * password *)
-type keyring_entry = string * string * string
+	(* site * username * password *)
+	type keyring_entry = string * string * string
 
-let decrypt_data data password = data
+
+	let _ = 
+		Js.Unsafe.eval_string "sjcl.random.startCollectors()"
+	
+	let replace input output content =
+		(Js.Unsafe.coerce content)##replace(input, output)
+
+	exception WrongPassword
+	let decipher key data : string =
+		try
+			Js.to_string ((Js.Unsafe.js_expr "sjcl")##decrypt(Js.string key, Js.string data))
+		with
+		| _ -> raise WrongPassword
+
+
+	let cipher key data : string =
+		Js.to_string ((Js.Unsafe.js_expr "sjcl")##encrypt(Js.string key, Js.string data))
 
 }}
