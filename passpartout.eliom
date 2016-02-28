@@ -52,8 +52,13 @@ let user_list_service = service_stub (Eliom_parameter.unit) (fun () ->
 let user_set_permission_service = service_stub (Eliom_parameter.((string "user") ** (string "permission_name") ** (bool "value"))) (fun (user, (perm, value)) ->
 	User.ensure_role "" >>= fun () -> User.set_permission user perm value)
 
-let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_name" ** string "data")) (fun (keyring_name, data) ->
-	User.ensure_role "create keyring" >>= fun () -> Engine.new_keyring keyring_name data)
+let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_name" ** (string "data" ** (opt (file "data_file"))))) (fun (keyring_name, (data, data_file)) ->
+	User.ensure_role "create keyring" >>= fun () ->
+		match data_file with
+		| None -> Engine.new_keyring keyring_name data
+		| Some f -> lwt file_data = Server_ext.get_file_data f in
+			Engine.new_keyring keyring_name file_data
+		)
 
 
 {client{
@@ -165,11 +170,11 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 		| None -> failwith "no main list to update"
 	and widget_new_keyring () =
 		let item_li = createP document in
-		let form = Widgets.form Widgets.((string "keyring") ** (string_password "password")) ~autocomplete:false "create new keyring" (fun (keyring, password) ->
+		let form = Widgets.form Widgets.((string "keyring") ** ((string_password "password") ** (file "old_data"))) ~autocomplete:false "create new keyring" (fun (keyring, (password, old_data)) ->
 			start_loading ();
 			clear_main_frame ();
 			try_lwt
-				lwt _ = get_from_server %keyring_create_new_service (keyring, (Engine.cipher password "")) in
+				lwt _ = get_from_server %keyring_create_new_service (keyring, ((Engine.cipher password ""), old_data)) in
 				let () = appendChild (main_frame()) (document##createTextNode (Js.string (keyring ^ " added"))) in
 				let _ = update_main_list () in
 				end_loading ()

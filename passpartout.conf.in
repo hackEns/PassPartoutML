@@ -5,6 +5,11 @@
 <ocsigen>
   <server>
     <port>%%PORT%%</port>
+	<uploaddir>/tmp/upload</uploaddir>
+
+	<maxuploadfilesize>2MB</maxuploadfilesize>
+
+	<maxrequestbodysize>100MB</maxrequestbodysize>
     %%% Only set for running, not for testing
     %%USERGROUP%%
     <logdir>%%LOGDIR%%</logdir>
