@@ -19,11 +19,14 @@ type grid_column =
 (* a small copy of eliom type system, which seems to be private atm *)
 type +'a param_name = string
 
+type file_dom = File.file Js.t
+
 type _ atom =
   | TInt			: int atom
   | TBool    	  	: bool atom
   | TString   		: string atom
   | TStringPassword	: string atom
+  | TFile           : (file_dom option) atom
 
 type (_,_) params_type =
   | TProd : ( ('a, 'an) params_type * ('b, 'bn) params_type) -> (('a * 'b), 'an * 'bn) params_type
@@ -35,6 +38,8 @@ let bool (n : string) = TAtom (n,TBool)
 
 let string (n : string) = TAtom (n,TString)
 let string_password (n : string) = TAtom (n,TStringPassword)
+
+let file (n : string) = TAtom(n, TFile)
 
 let prod t1 t2 = TProd (t1,t2)
 
@@ -68,6 +73,11 @@ let form :type a c. ?autocomplete:bool -> (a, c) params_type -> string -> (a -> 
 			input##placeholder <- Js.string n;
 			let () = appendChild form input in
 			fun () -> Js.to_string input##value
+		| TAtom(n, TFile) ->
+			let input = createInput ~_type:(Js.string "file") document in
+			input##placeholder <- Js.string n;
+			let () = appendChild form input in
+			fun () -> Js.Optdef.case (input##files) (fun () -> None) (fun f -> Js.Opt.to_option (f##item(0)))
 		| TAtom(n, TStringPassword) ->
 			let input = createInput ~_type:(Js.string "password") document in
 			input##placeholder <- Js.string n;
