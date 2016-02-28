@@ -74,9 +74,13 @@ let form :type a c. ?autocomplete:bool -> (a, c) params_type -> string -> (a -> 
 			let () = appendChild form input in
 			fun () -> Js.to_string input##value
 		| TAtom(n, TFile) ->
+			let file = createLabel document in
 			let input = createInput ~_type:(Js.string "file") document in
-			input##placeholder <- Js.string n;
-			let () = appendChild form input in
+			let span = createSpan document in
+			let () = appendChild span (document##createTextNode (Js.string n)) in
+			let () = appendChild file span in
+			let () = appendChild file input in
+			let () = appendChild form file in
 			fun () -> Js.Optdef.case (input##files) (fun () -> None) (fun f -> Js.Opt.to_option (f##item(0)))
 		| TAtom(n, TStringPassword) ->
 			let input = createInput ~_type:(Js.string "password") document in

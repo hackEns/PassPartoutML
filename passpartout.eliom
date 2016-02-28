@@ -170,7 +170,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 		| None -> failwith "no main list to update"
 	and widget_new_keyring () =
 		let item_li = createP document in
-		let form = Widgets.form Widgets.((string "keyring") ** ((string_password "password") ** (file "old_data"))) ~autocomplete:false "create new keyring" (fun (keyring, (password, old_data)) ->
+		let form = Widgets.form Widgets.((string "keyring") ** ((string_password "password for a new keyring") ** (file "or an existing keyring file"))) ~autocomplete:false "create new keyring" (fun (keyring, (password, old_data)) ->
 			start_loading ();
 			clear_main_frame ();
 			try_lwt
