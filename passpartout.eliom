@@ -118,6 +118,10 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 						Lwt.return ()
 
 					) in
+					let grid = Widgets.grid
+						Widgets.(grid_string (grid_string (grid_string grid_header)))
+						(List.map Widgets.(fun (a, b, c) -> TextCell(a)::TextCell(b)::TextCell(c)::[]) !keyring_data) [] in
+					let () = appendChild (main_frame ()) grid in
 					let () = appendChild (main_frame ()) new_password in
 					Lwt.return ()
 					end
