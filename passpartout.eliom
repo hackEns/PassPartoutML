@@ -174,7 +174,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			start_loading ();
 			clear_main_frame ();
 			try_lwt
-				lwt _ = get_from_server %keyring_create_new_service (keyring, ((Engine.cipher password ""), old_data)) in
+				lwt _ = get_from_server %keyring_create_new_service (keyring, ((Engine.cipher_data password Engine.empty_keyring), old_data)) in
 				let () = appendChild (main_frame()) (document##createTextNode (Js.string (keyring ^ " added"))) in
 				let _ = update_main_list () in
 				end_loading ()

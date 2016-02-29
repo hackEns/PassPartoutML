@@ -49,5 +49,13 @@ let new_keyring name data =
 
 	let cipher key data : string =
 		Js.to_string ((Js.Unsafe.js_expr "sjcl")##encrypt(Js.string key, Js.string data))
+	
+	let empty_keyring:(keyring_entry list) = []
+
+	let load_data:(string -> keyring_entry list) = fun data -> data |> Js.string |> Json.unsafe_input
+
+	let encode_data d = d |> Json.output |> Js.to_string
+
+	let cipher_data password data = data |> encode_data |> cipher password
 
 }}
