@@ -41,6 +41,10 @@ let get_keyring_service = service_stub (Eliom_parameter.string "keyring_name") (
 	User.ensure_role keyring_name >>=
 	(fun () -> Engine.get_keyring_data keyring_name))
 
+let write_keyring_service = service_stub Eliom_parameter.(string "keyring_name" ** string "content") (fun (keyring_name, content) ->
+	User.ensure_role keyring_name >>=
+	(fun () -> Engine.set_keyring_data keyring_name content))
+
 
 let keyring_list_service = service_stub (Eliom_parameter.unit) (fun () -> Engine.get_keyring_list ())
 	
@@ -105,8 +109,16 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 				try
 					begin
 					let data = (Engine.decipher password keyring_data) in
+					let keyring_data = ref (Engine.load_data data) in
 					let () = clear_main_frame () in
 					let () = appendChild (main_frame ()) (document##createTextNode (Js.string data)) in
+					let new_password = Widgets.form Widgets.(string "name" ** string "user" ** string_password "password") "add" (fun (name, (user, site_password)) ->
+						keyring_data := (name, user, password)::(!keyring_data);
+						lwt _ = get_from_server %write_keyring_service (keyring, Engine.cipher_data password !keyring_data) in
+						Lwt.return ()
+
+					) in
+					let () = appendChild (main_frame ()) new_password in
 					Lwt.return ()
 					end
 				with

@@ -27,6 +27,9 @@ let new_keyring name data =
 	with
 	| Not_found -> (add keyring_table name data; User.register_permission name)
 
+let set_keyring_data name data =
+	add keyring_table name data
+
 {client{
 
 	(* site * username * password *)
