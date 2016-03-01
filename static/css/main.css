@@ -123,7 +123,9 @@ a:active {
 
 .widgets-table {
 	border-spacing: 0px;
-	margin:0.3em;
+	width:100%;
+	box-sizing:border-box;
+	padding:0.3em;
 }
 
 .widgets-table td {
@@ -135,6 +137,11 @@ a:active {
 .widgets-table tr {
 	margin:0;
 }
+
+.widgets-table tr:hover {
+	background-color:#eee;
+}
+
 .widgets-table td:first-child {
 	border-left: 0px solid lightgrey;
 }
