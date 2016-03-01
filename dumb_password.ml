@@ -27,7 +27,7 @@ let password_table = (open_table "users":string table)
 (*let _ = add password_table "root" "root"*)
 
 (* FIXME: did not manage to do that without a reference, is that possible? *)
-let main_service =
+let main_service logged_callback =
 	let post_service_ref = ref None in
     let get_service = App.register_service
         ~path:service_path
@@ -52,7 +52,7 @@ let main_service =
 				lwt real_password = find password_table user in
 				if real_password = password then
 					lwt () = User.perform_login user in
-					return (Template.make_page [p [pcdata "logged in"]])
+					return (logged_callback ())
 				else raise BadPassword
 			with
 			| Not_found | BadPassword -> send_error "bad password"

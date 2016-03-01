@@ -85,7 +85,7 @@ let service_path = ["login"; "cas"]
 let service_url = List.fold_left (fun a b -> a ^ "/" ^ b) "" service_path
 let _ = Ocsigen_messages.errlog service_url
 
-let main_service =
+let main_service logged_callback =
 	App.register_service
 		~path:service_path
 		~get_params:Eliom_parameter.(string "ticket")
@@ -96,7 +96,7 @@ let main_service =
 			 let user_id = cas_xml_get_login cas_data in
 			 lwt () = User.perform_login user_id in
 
-			 return (Template.make_page [ p [pcdata cas_data]; ])
+			 return (logged_callback ())
 		 with
 		 | CASConnectionError(error) -> send_error ("Could not connect to the CAS to check the authentification: " ^ error)
 		 | CASDataError(error) -> send_error ("CAS data not recognized: " ^ error)

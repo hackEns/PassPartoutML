@@ -8,8 +8,17 @@ open Eliom_tools.F
 
 open User
 
+let display_logged_page url () =
+	Template.make_page_redirect url [ p [pcdata "logged in"] ]
+
+
+let get_page_url () =
+	Eliom_request_info.(
+	(if get_ssl () then "https://" else "http://") ^ (get_hostname ()) ^ ":" ^ (string_of_int @@ get_server_port ()) ^ "/" ^(Eliom_request_info.get_full_url ()))
+	
+
 let display_auths_mechanism services =
-	let auths_list = List.map (fun (service, name) -> (a service [pcdata name] ())) services in
+	let auths_list = List.map (fun (service, name) -> (a (service (display_logged_page (get_page_url ()))) [pcdata name] ())) services in
 	return (Template.make_page [ p auths_list ])
 
 let require services role success = match role with
@@ -25,4 +34,5 @@ let require services role success = match role with
 			with
 			| Not_found -> display_auths_mechanism services
 				
+
 				

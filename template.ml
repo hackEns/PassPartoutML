@@ -24,3 +24,13 @@ let make_page l = html
 				 (body (top_wrapper ()::l)
 				)
 
+let make_page_redirect url l = html
+				 ~title:"restricted area"
+				 ~js:[["js";"sjcl.js"]]
+				 ~css:[["css";"main.css"]]
+				 ~other_head:[meta ~a:[a_name "viewport";
+				                      a_content "user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"]
+									                ();
+							  meta ~a:[a_http_equiv "refresh"; a_content ("1;url="^url) ] () ]
+				 (body (top_wrapper ()::l)
+				)
