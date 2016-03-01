@@ -121,3 +121,23 @@ a:active {
 	border-bottom: 1px solid blue;
 }
 
+.widgets-table {
+	border-spacing: 0px;
+	margin:0.3em;
+}
+
+.widgets-table td {
+	border-left: 1px solid lightgrey;
+	border-bottom: 1px solid lightgrey;
+	margin:0;
+	padding:0.3em;
+}
+.widgets-table tr {
+	margin:0;
+}
+.widgets-table td:first-child {
+	border-left: 0px solid lightgrey;
+}
+.widgets-table tr:last-child td {
+	border-bottom:0;
+}

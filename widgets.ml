@@ -130,6 +130,7 @@ let line_to_tr line =
 
 let lines_to_table lines =
 	let table = createTable document in
+	table##className <- Js.string "widgets-table";
 	List.iter (fun e -> e |> line_to_tr |> appendChild table) lines;
 	table
 
