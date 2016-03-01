@@ -108,7 +108,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 					) in
 					let grid = Widgets.grid
 						Widgets.(grid_string (grid_string (grid_string grid_header)))
-						(List.map Widgets.(fun (a, b, c) -> TextCell(a)::TextCell(b)::TextCell(c)::[]) !keyring_data) [] in
+						(List.map Widgets.(fun (a, b, c) -> TextCell(a)::TextCell(b)::TextCell(c)::[]) !keyring_data) Widgets.(TextCell("name")::TextCell("user")::TextCell("password")::[]) in
 					let () = appendChild (main_frame ()) grid in
 					let () = appendChild (main_frame ()) new_password in
 					Lwt.return ()
@@ -160,7 +160,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			let user_list = List.map (fun (user, perm) ->
 				(Widgets.TextCell(user)) :: List.map (fun p -> Widgets.BoolCell(List.mem p perm)) permission_list
 			) user_list in
-			let permission_header = List.map (fun s -> Widgets.TextCell s) permission_list in
+			let permission_header = (Widgets.TextCell "user")::List.map (fun s -> Widgets.TextCell s) permission_list in
 			appendChild (main_frame ()) (Widgets.grid table_type user_list permission_header);
 			end_loading ()
 	

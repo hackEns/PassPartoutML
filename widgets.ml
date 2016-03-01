@@ -161,5 +161,5 @@ let grid table_type content header_content =
 		| _ -> failwith "Invalid table"
 	in
 
-	lines_to_table	(List.map (fun c -> create_elements c (table_type, c)) content)
+	lines_to_table @@ (List.map (fun (TextCell(s)) -> label s) header_content)::(List.map (fun c -> create_elements c (table_type, c)) content)
 
