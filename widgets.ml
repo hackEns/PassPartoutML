@@ -13,6 +13,7 @@ type grid_column =
 	| End
 	| BoolCol of grid_column * (bool -> grid_cell list -> Dom_html.element Js.t)
 	| TextCol of grid_column * (string -> Dom_html.element Js.t)
+	| CopiableTextCol of grid_column * (string -> Dom_html.element Js.t)
 
 (* a small copy of eliom type system, which seems to be private atm *)
 type +'a param_name = string
@@ -152,12 +153,27 @@ let grid_editable_boolean callback next = BoolCol(next, fun b whole_line -> (
 	))
 
 let grid_string next = TextCol(next, fun s -> label s)
+let grid_copiable_string next = CopiableTextCol(next, fun s ->
+	let span = createSpan document in
+	let form = createForm document in
+	let input = createInput ~_type:(Js.string "text") document in
+	input##value <- Js.string s;
+	input##readOnly <- Js.bool true;
+	appendChild form input;
+	appendChild span form;
+	let a = createA document in
+	appendChild a (document##createTextNode (Js.string "copy"));
+	appendChild span a;
+	let _ =	Lwt_js_events.clicks a (fun e _ -> Dom.preventDefault e; input##select (); document##execCommand(Js.string "copy", Js.bool false, Js.null); Lwt.return ()) in
+	span
+	)
 
 let grid table_type content header_content =
 	let rec create_elements whole_line = function
 		| (End, []) -> []
 		| (BoolCol(next_table_type, printer), (BoolCell(data))::q) -> (printer data whole_line)::(create_elements whole_line (next_table_type, q))
 		| (TextCol(next_table_type, printer), (TextCell(data))::q) -> (printer data)::(create_elements whole_line (next_table_type, q))
+		| (CopiableTextCol(next_table_type, printer), (TextCell(data))::q) -> (printer data)::(create_elements whole_line (next_table_type, q))
 		| _ -> failwith "Invalid table"
 	in
 
