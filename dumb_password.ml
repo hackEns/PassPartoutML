@@ -1,4 +1,4 @@
-module DumbPassword (App: Eliom_registration.ELIOM_APPL) = struct
+module DumbPassword (App: App.APP) = struct
 
 open Lwt
 open Config
@@ -16,7 +16,7 @@ exception BadPassword
 
 let send_error str =
 	Ocsigen_messages.errlog str;
-	Lwt.return
+	Eliom_registration.Html5.send
         (html ~title:"error" (body [pcdata ("Error: " ^ str)]))
 
 let service_path = ["login"; "dumb_password"]
@@ -25,7 +25,7 @@ let password_table = (open_table "users":string table)
 
 (*let _ = add password_table "root" "root"*)
 
-let main_service logged_callback =
+let main_service =
     let get_service = Eliom_service.App.service
         ~path:service_path
         ~get_params:Eliom_parameter.(unit) () in
@@ -33,13 +33,13 @@ let main_service logged_callback =
 		~fallback:get_service
         ~post_params:Eliom_parameter.((string "user") ** (string "password")) ()
 	in
-	let _ = App.register post_service
+	let _ = Eliom_registration.Any.register post_service
         (fun () (user,password) ->
 			try_lwt
 				lwt real_password = find password_table user in
 				if real_password = password then
 					lwt () = User.perform_login user in
-					return (logged_callback ())
+					Eliom_registration.Redirection.send App.welcome_service
 				else raise BadPassword
 			with
 			| Not_found | BadPassword -> send_error "bad password"

@@ -1,4 +1,4 @@
-module Cas (App: Eliom_registration.ELIOM_APPL) = struct
+module Cas (App: App.APP) = struct
 
 open Lwt
 open Config
@@ -78,15 +78,15 @@ let cas_xml_is_successful_debug func data =
 
 let send_error str =
 	Ocsigen_messages.errlog str;
-	Lwt.return
+	Eliom_registration.Html5.send 
         (Template.make_page [pcdata ("Error: " ^ str)])
 
 let service_path = ["login"; "cas"]
 let service_url = List.fold_left (fun a b -> a ^ "/" ^ b) "" service_path
 let _ = Ocsigen_messages.errlog service_url
 
-let main_service logged_callback =
-	App.register_service
+let main_service =
+	Eliom_registration.Any.register_service
 		~path:service_path
 		~get_params:Eliom_parameter.(string "ticket")
 		(fun ticket () ->
@@ -96,7 +96,7 @@ let main_service logged_callback =
 			 let user_id = cas_xml_get_login cas_data in
 			 lwt () = User.perform_login user_id in
 
-			 return (logged_callback ())
+			 Eliom_registration.Redirection.send App.welcome_service
 		 with
 		 | CASConnectionError(error) -> send_error ("Could not connect to the CAS to check the authentification: " ^ error)
 		 | CASDataError(error) -> send_error ("CAS data not recognized: " ^ error)

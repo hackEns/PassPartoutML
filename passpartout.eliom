@@ -10,15 +10,6 @@ open Config
 open Lwt
 open Ocsigen_messages
 
-module Userdemo_app =
-  Eliom_registration.App (
-    struct
-      let application_name = "passpartout"
-    end)
-
-module CasModule = Cas.Cas(Userdemo_app)
-module DumbPasswordModule = Dumb_password.DumbPassword(Userdemo_app)
-
 open Eliom_tools.D
 
 let f (a:string) = console (fun() -> a)
@@ -28,9 +19,6 @@ let f (a:string) = console (fun() -> a)
 (*let _ = cas_xml_is_successful_debug f  data_debug_login*)
 
 (* let _ = f (cas_xml_get_login data_debug_login) *)
-
-let require = Auth.require [CasModule.main_service, "cas"; DumbPasswordModule.main_service, "password"]
-
 
 let service_stub param func =
   Eliom_registration.Ocaml.register_post_coservice'
@@ -219,10 +207,26 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 }}
 
 
-let _ = 
-	Userdemo_app.register_service
+let main_service = Eliom_service.App.service
 		~path:[]
 		~get_params: Eliom_parameter.unit
+		()
+
+module PassPartoutApp =
+  App.App (
+    struct
+      let application_name = "passpartout"
+	  let welcome_service = main_service
+    end)
+
+module CasModule = Cas.Cas(PassPartoutApp)
+module DumbPasswordModule = Dumb_password.DumbPassword(PassPartoutApp)
+
+let require = Auth.require [CasModule.main_service, "cas"; DumbPasswordModule.main_service, "password"]
+
+
+let _ = 
+	PassPartoutApp.register main_service
 		(fun () () ->
 			require
 			"logged"
