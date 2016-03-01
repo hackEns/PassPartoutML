@@ -4,8 +4,6 @@ open Html5.D
 open Dom
 open Dom_html
 
-let (|-) f g x = f (g x)
-
 type grid_cell =
 	| BoolCell of bool
 	| TextCell of string
@@ -126,13 +124,13 @@ let wrap_td elt =
 
 let line_to_tr line =
 	let tr = createTr document in
-	List.iter ((appendChild tr) |- wrap_td) line;
+	List.iter (fun e -> e |> wrap_td |> appendChild tr) line;
 	tr
 	
 
 let lines_to_table lines =
 	let table = createTable document in
-	List.iter ((appendChild table) |- line_to_tr) lines;
+	List.iter (fun e -> e |> line_to_tr |> appendChild table) lines;
 	table
 
 
