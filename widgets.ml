@@ -91,7 +91,7 @@ let form :type a c. ?autocomplete:bool -> (a, c) params_type -> string -> (a -> 
 	let submit = createInput ~_type:(Js.string "submit") document in
 	submit##value <- Js.string send;
 	let f = build_form param in
-	let _ =	Lwt_js_events.submits form (fun _ _ ->  callback (f () )) in
+	let _ =	Lwt_js_events.submits form (fun e _ -> Dom.preventDefault e;  callback (f () )) in
 	appendChild form submit;
 	appendChild div form;
 	div
