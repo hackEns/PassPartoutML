@@ -85,6 +85,11 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 	let main_frame () = getElementById "main-frame"
 
 	let clear_main_frame () = clear (main_frame ())
+
+	let set_main_frame_title title =
+		let title_elt = Widgets.label title in
+		title_elt##className <- Js.string "main-frame-title";
+		appendChild (main_frame ()) title_elt
 	
 	let get_from_server service param = Eliom_client.call_ocaml_service ~service:service () param
 	
@@ -99,6 +104,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 					let data = (Engine.decipher password keyring_data) in
 					let keyring_data = ref (Engine.load_data data) in
 					let () = clear_main_frame () in
+					let () = set_main_frame_title keyring in
 					let new_password = Widgets.form Widgets.(string "name" ** string "user" ** string_password "password") "add" (fun (name, (user, site_password)) ->
 						keyring_data := (name, user, site_password)::(!keyring_data);
 						lwt _ = get_from_server %write_keyring_service (keyring, Engine.cipher_data password !keyring_data) in

@@ -251,3 +251,13 @@ a:active {
 	background-color:red;
 	color:red;
 }
+
+.main-frame-title {
+	display: block;
+	clear:both;
+	padding:0.1em;
+	padding-left:0.8em;
+	width:100%;
+	box-sizing:border-box;
+	border-bottom: 1px solid grey;
+}
