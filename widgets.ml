@@ -125,8 +125,15 @@ let wrap_td elt =
 
 let line_to_tr line =
 	let tr = createTr document in
-	List.iter (fun e -> e |> wrap_td |> appendChild tr) line;
-	tr
+	let tds = List.map wrap_td line in
+	match tds with
+	| [] -> tr
+	| t::q -> (List.iter (fun e -> e |> appendChild tr) tds;
+			   Lwt_js_events.clicks t (fun e _ -> Dom.preventDefault e; List.iter (fun e -> let classname = Js.string "widgets-table-visible-td" in
+			   		 if e##className = classname then 
+					 	e##className <- Js.string ""
+					 else e##className <- classname) tds; Lwt.return ());
+			   tr)
 	
 
 let lines_to_table lines =
@@ -155,6 +162,7 @@ let grid_editable_boolean callback next = BoolCol(next, fun b whole_line -> (
 let grid_string next = TextCol(next, fun s -> label s)
 let grid_copiable_string next = CopiableTextCol(next, fun s ->
 	let span = createSpan document in
+	span##className <- Js.string "copiable-cell";
 	let form = createForm document in
 	let input = createInput ~_type:(Js.string "text") document in
 	input##value <- Js.string s;
