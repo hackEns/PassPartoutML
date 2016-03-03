@@ -99,7 +99,6 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 					let data = (Engine.decipher password keyring_data) in
 					let keyring_data = ref (Engine.load_data data) in
 					let () = clear_main_frame () in
-					let () = appendChild (main_frame ()) (document##createTextNode (Js.string data)) in
 					let new_password = Widgets.form Widgets.(string "name" ** string "user" ** string_password "password") "add" (fun (name, (user, site_password)) ->
 						keyring_data := (name, user, site_password)::(!keyring_data);
 						lwt _ = get_from_server %write_keyring_service (keyring, Engine.cipher_data password !keyring_data) in
