@@ -173,6 +173,10 @@ a:active {
 	padding-bottom:0.3em;
 }
 
+.widgets-table th {
+	display: none;
+}
+
 .widgets-table td:last-child.widgets-table-visible-td {
 	border-bottom: 1px solid lightgrey;
 }

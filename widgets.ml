@@ -135,12 +135,26 @@ let line_to_tr line =
 					 else e##className <- classname) tds; Lwt.return ());
 			   tr)
 	
+let line_to_th line =
+	let tr = createTh document in
+	let tds = List.map wrap_td line in
+	match tds with
+	| [] -> tr
+	| t::q -> (List.iter (fun e -> e |> appendChild tr) tds;
+			   Lwt_js_events.clicks t (fun e _ -> Dom.preventDefault e; List.iter (fun e -> let classname = Js.string "widgets-table-visible-td" in
+			   		 if e##className = classname then 
+					 	e##className <- Js.string ""
+					 else e##className <- classname) tds; Lwt.return ());
+			   tr)
+	
+
 
 let lines_to_table lines =
 	let table = createTable document in
 	table##className <- Js.string "widgets-table";
-	List.iter (fun e -> e |> line_to_tr |> appendChild table) lines;
-	table
+	match lines with
+	| [] -> table
+	| t::q -> (t |> line_to_th |> appendChild table; List.iter (fun e -> e |> line_to_tr |> appendChild table) q; table)
 
 
 
