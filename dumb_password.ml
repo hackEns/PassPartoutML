@@ -46,12 +46,12 @@ let main_service =
 		) in
 	let _ = App.register get_service
         (fun () () ->
-			let login_form = Html5.F.post_form ~service:post_service (fun (user, password) ->
+			let login_form = Form.post_form ~service:post_service (fun (user, password) ->
 				[p [ pcdata "User";
-					string_input ~input_type:`Text ~name:user ();
+					Form.input ~input_type:`Text ~name:user Form.string;
 					pcdata "Password";
-					string_input ~input_type:`Password ~name:password ();
-					string_input ~input_type:`Submit ()
+					Form.input ~input_type:`Password ~name:password Form.string;
+					Form.input ~input_type:`Submit Form.string;
 				]]) () in
             return (Template.make_page [login_form]))
     in

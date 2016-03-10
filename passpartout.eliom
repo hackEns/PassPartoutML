@@ -240,7 +240,8 @@ let _ =
 				let _ =  {unit{
 					Url.Current.set_fragment "main";
 					menu :=  Some (Eliom_content.Html5.To_dom.of_ul %keyring_list);
-					update_main_list ()
+					update_main_list ();
+		Js.Unsafe.eval_string "sjcl.random.startCollectors()"
 					}} in
 
 				return (Template.make_page [div ~a:[a_id "main"] [keyring_list];

@@ -36,8 +36,8 @@ let set_keyring_data name data =
 	type keyring_entry = string * string * string
 
 
-	let _ = 
-		Js.Unsafe.eval_string "sjcl.random.startCollectors()"
+	(*let _ = 
+		Js.Unsafe.eval_string "sjcl.random.startCollectors()"*)
 	
 	let replace input output content =
 		(Js.Unsafe.coerce content)##replace(input, output)
