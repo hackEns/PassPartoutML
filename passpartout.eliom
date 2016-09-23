@@ -105,16 +105,23 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 					let keyring_data = ref (Engine.load_data data) in
 					let () = clear_main_frame () in
 					let () = set_main_frame_title keyring in
+                    let grid_wrapper = createDiv document in
 					let new_password = Widgets.form Widgets.(string "name" ** string "user" ** string_password "password") "add" (fun (name, (user, site_password)) ->
 						keyring_data := (name, user, site_password)::(!keyring_data);
 						lwt _ = get_from_server %write_keyring_service (keyring, Engine.cipher_data password !keyring_data) in
+                        clear grid_wrapper;
+                        let grid = Widgets.grid
+                            Widgets.(grid_string (grid_string (grid_copiable_string grid_header)))
+                            (List.map Widgets.(fun (a, b, c) -> TextCell(a)::TextCell(b)::TextCell(c)::[]) !keyring_data) Widgets.(TextCell("name")::TextCell("user")::TextCell("password")::[]) in
+                        let () = appendChild grid_wrapper grid in
 						Lwt.return ()
 
 					) in
 					let grid = Widgets.grid
 						Widgets.(grid_string (grid_string (grid_copiable_string grid_header)))
 						(List.map Widgets.(fun (a, b, c) -> TextCell(a)::TextCell(b)::TextCell(c)::[]) !keyring_data) Widgets.(TextCell("name")::TextCell("user")::TextCell("password")::[]) in
-					let () = appendChild (main_frame ()) grid in
+                    let () = appendChild grid_wrapper grid in
+					let () = appendChild (main_frame ()) grid_wrapper in
 					let () = appendChild (main_frame ()) new_password in
 					Lwt.return ()
 					end
