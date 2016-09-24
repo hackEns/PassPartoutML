@@ -1,11 +1,11 @@
-{shared{
+[%%shared
   open Eliom_lib
   open Eliom_content
   open Html5.D
-(*  open Html5.F*)
-open Dom
-open Dom_html
-}}
+  (*  open Html5.F*)
+  open Dom
+  open Dom_html
+]
 open Config
 open Lwt
 open Ocsigen_messages
@@ -48,17 +48,16 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 	User.ensure_role "create keyring" >>= fun () ->
 		match data_file with
 		| None -> Engine.new_keyring keyring_name data
-		| Some f -> lwt file_data = Server_ext.get_file_data f in
+		| Some f -> let%lwt file_data = Server_ext.get_file_data f in
 			Engine.new_keyring keyring_name file_data
 		)
 
 
-{client{
-
+[%%client
 
 	let clear elt = 
-		let child = list_of_nodeList(elt##childNodes) in
-		List.iter (fun c -> let _ = (elt##removeChild(c)) in ()) child
+		let child = list_of_nodeList(elt##.childNodes) in
+		List.iter (fun c -> let _ = (removeChild elt c) in ()) child
 
 	let loading_count = ref 0
 
@@ -77,7 +76,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 	let create_keyring_item s =
 		let item_li = createLi document in
 		let a = createA document in
-		a##href <- Js.string "#main-frame-wrapper";
+		a##.href := Js.string "#main-frame-wrapper";
 		appendChild item_li a;
 		appendChild a (document##createTextNode (Js.string s));
 		item_li
@@ -88,7 +87,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 
 	let set_main_frame_title title =
 		let title_elt = Widgets.label title in
-		title_elt##className <- Js.string "main-frame-title";
+		title_elt##.className := Js.string "main-frame-title";
 		appendChild (main_frame ()) title_elt
 	
 	let get_from_server service param = Eliom_client.call_ocaml_service ~service:service () param
@@ -96,8 +95,8 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 	let load_keyring keyring _ _ = 
 		start_loading (); clear_main_frame ();
 		
-		try_lwt
-			lwt keyring_data = get_from_server %get_keyring_service keyring in
+		try%lwt
+			let%lwt keyring_data = get_from_server ~%get_keyring_service keyring in
 			let entry = Widgets.form Widgets.((string_password "password")) "decrypt" (fun password ->
 				try
 					begin
@@ -108,7 +107,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
                     let grid_wrapper = createDiv document in
 					let new_password = Widgets.form Widgets.(string "name" ** string "user" ** string_password "password") "add" (fun (name, (user, site_password)) ->
 						keyring_data := (name, user, site_password)::(!keyring_data);
-						lwt _ = get_from_server %write_keyring_service (keyring, Engine.cipher_data password !keyring_data) in
+						let%lwt _ = get_from_server ~%write_keyring_service (keyring, Engine.cipher_data password !keyring_data) in
                         clear grid_wrapper;
                         let grid = Widgets.grid
                             Widgets.(grid_string (grid_string (grid_copiable_string grid_header)))
@@ -139,7 +138,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 	
 	let load_keyrings keyring_list_ul =
 		start_loading ();
-		lwt keyring_list = get_from_server %keyring_list_service () in
+		let%lwt keyring_list = get_from_server ~%keyring_list_service () in
 		let _ = List.iter (
 			fun s ->
 				let item_li = create_keyring_item s in
@@ -158,12 +157,12 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			start_loading ();
 			clear_main_frame ();
 
-			lwt (permission_list, user_list) = get_from_server %user_list_service () in
+			let%lwt (permission_list, user_list) = get_from_server ~%user_list_service () in
 			let table_type = List.fold_right (fun p table_type ->
-				Widgets.grid_editable_boolean (fun s whole_line ->
+				Widgets.grid_editable_boolean p (fun s whole_line ->
 					match whole_line with
 					| Widgets.TextCell(user)::q -> begin
-						lwt _ = get_from_server %user_set_permission_service (user, (p, s)) in
+						let%lwt _ = get_from_server ~%user_set_permission_service (user, (p, s)) in
 						Lwt.return ()
 					end
 					| _ -> failwith "no id"
@@ -189,8 +188,8 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 		let form = Widgets.form Widgets.((string "keyring") ** ((string_password "password for a new keyring") ** (file "or an existing keyring file"))) ~autocomplete:false "create new keyring" (fun (keyring, (password, old_data)) ->
 			start_loading ();
 			clear_main_frame ();
-			try_lwt
-				lwt _ = get_from_server %keyring_create_new_service (keyring, ((Engine.cipher_data password Engine.empty_keyring), old_data)) in
+			try%lwt
+				let%lwt _ = get_from_server ~%keyring_create_new_service (keyring, ((Engine.cipher_data password Engine.empty_keyring), old_data)) in
 				let () = appendChild (main_frame()) (document##createTextNode (Js.string (keyring ^ " added"))) in
 				let _ = update_main_list () in
 				end_loading ()
@@ -216,7 +215,7 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			appendChild (main_frame ()) (widget_new_keyring ());
 			end_loading ();
 		)
-}}
+]
 
 
 let main_service = Eliom_service.App.service
@@ -244,12 +243,12 @@ let _ =
 			"logged"
 			(fun () ->
 				let keyring_list = ul ~a:[a_id "main-menu"] [] in
-				let _ =  {unit{
+				let _ =  [%client
 					Url.Current.set_fragment "main";
-					menu :=  Some (Eliom_content.Html5.To_dom.of_ul %keyring_list);
+					menu :=  Some (Eliom_content.Html5.To_dom.of_ul ~%keyring_list);
 					update_main_list ();
 		Js.Unsafe.eval_string "sjcl.random.startCollectors()"
-					}} in
+] in
 
 				return (Template.make_page [div ~a:[a_id "main"] [keyring_list];
 											div ~a:[a_id "main-frame-wrapper"] 

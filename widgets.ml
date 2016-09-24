@@ -46,9 +46,9 @@ let ( ** ) = prod
 
 let form :type a c. ?autocomplete:bool -> (a, c) params_type -> string -> (a -> 'e) -> 'd = fun ?autocomplete:(autocomplete=true) param send callback ->
 	let div = createDiv document in
-	div##classList##add (Js.string "text-entry");
+	div##.classList##add (Js.string "text-entry");
 	let form = createForm document in
-	form##setAttribute (Js.string "autocomplete", Js.string (if autocomplete then "on" else "off"));
+	form##setAttribute (Js.string "autocomplete") (Js.string (if autocomplete then "on" else "off"));
 	let rec build_form : type a c. (a, c) params_type -> (unit -> a) =
 		function
 		| TProd(t1, t2) -> let f1 = build_form t1 in
@@ -57,7 +57,7 @@ let form :type a c. ?autocomplete:bool -> (a, c) params_type -> string -> (a -> 
 		| TAtom(n, TInt) ->
 			let input = createInput ~_type:(Js.string "text") document in
 			let () = appendChild form input in
-			fun () -> int_of_string (Js.to_string input##value)
+			fun () -> int_of_string (Js.to_string input##.value)
 		| TAtom(n, TBool) ->
 			let checkbox = createLabel document in
 			let span = createSpan document in
@@ -66,12 +66,12 @@ let form :type a c. ?autocomplete:bool -> (a, c) params_type -> string -> (a -> 
 			let () = appendChild checkbox span in
 			let () = appendChild span (document##createTextNode (Js.string n)) in
 			let () = appendChild form checkbox in
-			fun () -> Js.to_bool input##checked
+			fun () -> Js.to_bool input##.checked
 		| TAtom(n, TString) ->
 			let input = createInput ~_type:(Js.string "text") document in
-			input##placeholder <- Js.string n;
+			input##.placeholder := Js.string n;
 			let () = appendChild form input in
-			fun () -> Js.to_string input##value
+			fun () -> Js.to_string input##.value
 		| TAtom(n, TFile) ->
 			let file = createLabel document in
 			let input = createInput ~_type:(Js.string "file") document in
@@ -80,15 +80,15 @@ let form :type a c. ?autocomplete:bool -> (a, c) params_type -> string -> (a -> 
 			let () = appendChild file span in
 			let () = appendChild file input in
 			let () = appendChild form file in
-			fun () -> Js.Optdef.case (input##files) (fun () -> None) (fun f -> Js.Opt.to_option (f##item(0)))
+			fun () -> Js.Optdef.case (input##.files) (fun () -> None) (fun f -> Js.Opt.to_option (f##item(0)))
 		| TAtom(n, TStringPassword) ->
 			let input = createInput ~_type:(Js.string "password") document in
-			input##placeholder <- Js.string n;
+			input##.placeholder := Js.string n;
 			let () = appendChild form input in
-			fun () -> Js.to_string input##value
+			fun () -> Js.to_string input##.value
 	in
 	let submit = createInput ~_type:(Js.string "submit") document in
-	submit##value <- Js.string send;
+	submit##.value := Js.string send;
 	let f = build_form param in
 	let _ =	Lwt_js_events.submits form (fun e _ -> Dom.preventDefault e;  callback (f () )) in
 	appendChild form submit;
@@ -104,8 +104,8 @@ let label s =
 	span
 
 let clear elt = 
-	let child = list_of_nodeList(elt##childNodes) in
-	List.iter (fun c -> let _ = (elt##removeChild(c)) in ()) child
+	let child = list_of_nodeList(elt##.childNodes) in
+	List.iter (fun c -> let _ = (removeChild elt c) in ()) child
 
 
 let change_label l s =
@@ -130,9 +130,9 @@ let line_to_tr line =
 	| [] -> tr
 	| t::q -> (List.iter (fun e -> e |> appendChild tr) tds;
 			   Lwt_js_events.clicks t (fun e _ -> Dom.preventDefault e; List.iter (fun e -> let classname = Js.string "widgets-table-visible-td" in
-			   		 if e##className = classname then 
-					 	e##className <- Js.string ""
-					 else e##className <- classname) tds; Lwt.return ());
+			   		 if e##.className = classname then 
+					 	e##.className := Js.string ""
+					 else e##.className := classname) tds; Lwt.return ());
 			   tr)
 	
 let line_to_th line =
@@ -142,16 +142,16 @@ let line_to_th line =
 	| [] -> tr
 	| t::q -> (List.iter (fun e -> e |> appendChild tr) tds;
 			   Lwt_js_events.clicks t (fun e _ -> Dom.preventDefault e; List.iter (fun e -> let classname = Js.string "widgets-table-visible-td" in
-			   		 if e##className = classname then 
-					 	e##className <- Js.string ""
-					 else e##className <- classname) tds; Lwt.return ());
+			   		 if e##.className = classname then 
+					 	e##.className := Js.string ""
+					 else e##.className := classname) tds; Lwt.return ());
 			   tr)
 	
 
 
 let lines_to_table lines =
 	let table = createTable document in
-	table##className <- Js.string "widgets-table";
+	table##.className := Js.string "widgets-table";
 	match lines with
 	| [] -> table
 	| t::q -> (t |> line_to_th |> appendChild table; List.iter (fun e -> e |> line_to_tr |> appendChild table) q; table)
@@ -160,9 +160,9 @@ let lines_to_table lines =
 
 let grid_header = End
 
-let grid_editable_boolean callback next = BoolCol(next, fun b whole_line -> (
+let grid_editable_boolean name callback next = BoolCol(next, fun b whole_line -> (
 		let current_val = ref b in
-		let display () = if !current_val then "true" else "false" in
+		let display () = if !current_val then Format.sprintf "%s: yes" name else Format.sprintf "%s: no" name in
 		let l = label (display ()) in
 		Lwt_js_events.(
 		       async (fun () ->
@@ -176,17 +176,17 @@ let grid_editable_boolean callback next = BoolCol(next, fun b whole_line -> (
 let grid_string next = TextCol(next, fun s -> label s)
 let grid_copiable_string next = CopiableTextCol(next, fun s ->
 	let span = createSpan document in
-	span##className <- Js.string "copiable-cell";
+	span##.className := Js.string "copiable-cell";
 	let form = createForm document in
 	let input = createInput ~_type:(Js.string "text") document in
-	input##value <- Js.string s;
-	input##readOnly <- Js.bool true;
+	input##.value := Js.string s;
+	input##.readOnly := Js.bool true;
 	appendChild form input;
 	appendChild span form;
 	let a = createA document in
 	appendChild a (document##createTextNode (Js.string "copy"));
 	appendChild span a;
-	let _ =	Lwt_js_events.clicks a (fun e _ -> Dom.preventDefault e; input##select (); document##execCommand(Js.string "copy", Js.bool false, Js.null); Lwt.return ()) in
+	let _ =	Lwt_js_events.clicks a (fun e _ -> Dom.preventDefault e; input##select; document##execCommand (Js.string "copy") (Js.bool false) Js.null; Lwt.return ()) in
 	span
 	)
 

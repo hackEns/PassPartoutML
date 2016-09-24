@@ -35,10 +35,10 @@ let main_service =
 	in
 	let _ = Eliom_registration.Any.register post_service
         (fun () (user,password) ->
-			try_lwt
-				lwt real_password = find password_table user in
+			try%lwt
+				let%lwt real_password = find password_table user in
 				if real_password = password then
-					lwt () = User.perform_login user in
+					let%lwt () = User.perform_login user in
 					Eliom_registration.Redirection.send App.welcome_service
 				else raise BadPassword
 			with

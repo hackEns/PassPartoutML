@@ -22,8 +22,8 @@ let require services role success = match role with
 		match Eliom_reference.Volatile.get user_id_ref with
 		| None -> display_auths_mechanism services
 		| Some login -> 
-			try_lwt
-				lwt user_permissions = find permission_table login in
+			try%lwt
+				let%lwt user_permissions = find permission_table login in
 				let _ = List.find (fun c -> c = role) user_permissions in
 				success ()
 			with

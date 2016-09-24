@@ -21,17 +21,16 @@ let new_keyring name data =
 		done;
 	in
 	check_good_name name;
-	try_lwt
-		lwt _ = find keyring_table name in
-		raise_lwt Keyring_exist
+	try%lwt
+		let%lwt _ = find keyring_table name in
+		raise Keyring_exist
 	with
 	| Not_found -> (add keyring_table name data; User.register_permission name)
 
 let set_keyring_data name data =
 	add keyring_table name data
 
-{client{
-
+[%%client
 	(* site * username * password *)
 	type keyring_entry = string * string * string
 
@@ -61,4 +60,4 @@ let set_keyring_data name data =
 
 	let cipher_data password data = data |> encode_data |> cipher password
 
-}}
+]

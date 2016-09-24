@@ -18,17 +18,17 @@ let permission_table = (open_table "permissions":string list table)
 let permission_list_table = (open_table "permissions_list":unit table)
 
 let register_permission p = 
-	try_lwt
-		lwt _ = find permission_list_table p in
+	try%lwt
+		let%lwt _ = find permission_list_table p in
 		return ()
 	with
 	| Not_found -> add permission_list_table p ()
 
-(* this creates an lwt thread, so once it execution is not guaranteed *)
+(* this creates an let%lwt thread, so once it execution is not guaranteed *)
 let _ = register_permission "logged"
 
 let list_users () =
-	lwt all_permissions = fold_table (fun s _ l -> return (s::l)) permission_list_table [] in
+	let%lwt all_permissions = fold_table (fun s _ l -> return (s::l)) permission_list_table [] in
 	fold_table (fun s p (q, l) -> return (q, ((s, p)::l))) permission_table (all_permissions, [])
 
 let ensure_role = function
@@ -37,8 +37,8 @@ let ensure_role = function
 		match Eliom_reference.Volatile.get user_id_ref with
 		| None -> raise Not_allowed
 		| Some login -> 
-			try_lwt
-				lwt user_permissions = find permission_table login in
+			try%lwt
+				let%lwt user_permissions = find permission_table login in
 				let _ = List.find (fun c -> c = role) user_permissions in
 				Lwt.return ()
 			with
@@ -47,7 +47,7 @@ let ensure_role = function
 
 (* *)
 let set_permission login perm value =
-	lwt user_permissions = find permission_table login in
+	let%lwt user_permissions = find permission_table login in
 	if value then
 		if (List.mem perm user_permissions) then return ()
 		else add permission_table login (perm::user_permissions)
@@ -57,8 +57,8 @@ let set_permission login perm value =
 (* Save the login in the session variables, load permissions, create them if needed, etc. *)
 let perform_login login =
 	Eliom_reference.Volatile.set user_id_ref (Some login);
-	try_lwt
-		lwt user_permissions = find permission_table login in
+	try%lwt
+		let%lwt user_permissions = find permission_table login in
 		let _ = List.find (fun c -> c = "logged") user_permissions
 		in return (); 
 	with
