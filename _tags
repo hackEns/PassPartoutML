@@ -1,4 +1,4 @@
-<server/*>: package(eliom.server), package(react), package(lwt.ppx),thread,package(ppx_deriving_protobuf)
+<server/*>: package(eliom.server), package(react), package(lwt.ppx),thread,package(ppx_deriving_protobuf),package(irmin),package(irmin.unix)
 <markdown*>: package(eliom.server),thread,package(lwt.ppx)
 <app_stub*>: package(eliom.server),thread,package(lwt.ppx)
 <client/*>: package(eliom.client), package(lwt.ppx), package(react), package(js_of_ocaml.ppx), linkall
