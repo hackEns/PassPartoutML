@@ -6,3 +6,5 @@ _server
 *.swo
 *.swn
 .depend
+_build
+_run

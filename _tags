@@ -1,0 +1,18 @@
+<server/*>: package(eliom.server), package(react), package(lwt.ppx),thread,package(ppx_deriving_protobuf)
+<markdown*>: package(eliom.server),thread,package(lwt.ppx)
+<app_stub*>: package(eliom.server),thread,package(lwt.ppx)
+<client/*>: package(eliom.client), package(lwt.ppx), package(react), package(js_of_ocaml.ppx), linkall
+<common_client*>: package(eliom.client)
+"user.ml": package(eliom.server), thread, package(lwt.ppx)
+"app.ml": package(eliom.server), thread, package(lwt.ppx)
+"auth.ml": package(eliom.server), thread, package(lwt.ppx)
+"cas.ml": package(eliom.server), thread, package(lwt.ppx)
+"dumb_password.ml": package(eliom.server), thread, package(lwt.ppx)
+"server_ext.ml": package(eliom.server), thread, package(lwt.ppx)
+"template.ml": package(eliom.server), thread, package(lwt.ppx)
+<widgets.ml>: package(eliom.client), package(js_of_ocaml.ppx), linkall
+<data/*>: for-pack(Data), package(react), package(eliom.server), thread, package(lwt.ppx), package(inotify.lwt), package(ppx_deriving_protobuf)
+<bep/*>: package(lwt.ppx),package(sqlite3),package(sha),package(inotify.lwt),package(ppx_bitstring.ext), package(bitstring),package(lwt.ssl),for-pack(Bep), thread
+<utils/*>:for-pack(Utils), thread
+<utils/kvstore*>:package(sqlite3), thread
+<server/irc*>: package(irc-client.lwt_ssl)
