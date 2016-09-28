@@ -74,14 +74,12 @@ let new_keyring name data =
 	exception WrongPassword
 	let decipher key data : string =
 		try
-			Js.to_string ((Js.Unsafe.js_expr "sjcl")##decrypt(Js.string key, Js.string data))
+			Js.to_string ((Js.Unsafe.js_expr "sjcl")##decrypt (Js.string key) (Js.string data))
 		with
 		| _ -> raise WrongPassword
 
 
 	let cipher key data : string =
-        Js.Unsafe.eval_string @@ Format.sprintf "console.log('%s')@." key;
-        Js.Unsafe.eval_string @@ Format.sprintf "console.log(sjcl.encrypt('%s', '%s'))@." key data;
 		Js.to_string ((Js.Unsafe.js_expr "sjcl")##encrypt (Js.string key) (Js.string data))
 	
 	let empty_keyring:(keyring_entry list) = []

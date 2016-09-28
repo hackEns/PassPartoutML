@@ -215,6 +215,8 @@ let keyring_create_new_service = service_stub (Eliom_parameter.(string "keyring_
 			appendChild (main_frame ()) (widget_new_keyring ());
 			end_loading ();
 		)
+
+open Engine
 ]
 
 

@@ -8,6 +8,7 @@ build:
 run: build
 	mkdir -p _run/log/passpartout/
 	mkdir -p _run/data/passpartout/ocsipersist
+	mkdir -p _run/upload
 	ocsigenserver -c passpartout.conf -v
 
 clean:
