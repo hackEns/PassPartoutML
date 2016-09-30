@@ -5,22 +5,22 @@ module Store =
   Irmin_git.FS (Irmin.Contents.String)(Irmin.Ref.String)(Irmin.Hash.SHA1)
 
 let config = Irmin_git.config ~root:"/tmp/irmin/test" ~bare:true ()
-let prog = Store.Repo.create config |> Lwt_main.run
-
-(*  >>= Store.master task >>= fun t ->
-  Store.update (t "Updating foo/bar")  ["foo"; "bar2"] "hi!2" >>= fun () ->
-  Store.read_exn (t "Reading foo/bar") ["foo"; "bar"] >>= fun x ->
-  Printf.printf "Read: %s\n%!" x;
-  Lwt.return_unit*)
+let prog = Store.Repo.create config
 
 exception Keyring_exist
 exception Keyring_bad_format
 
-let (get_keyring_data: string -> string Lwt.t) = fun keyring_data -> Store.master task prog >>= fun t -> Store.read_exn (t "reading") [keyring_data]
+let (get_keyring_data: string -> string Lwt.t) =
+  fun keyring_data ->
+    prog
+    >>= Store.master task
+    >>= fun t -> Store.read_exn (t "reading") [keyring_data]
 
 let get_keyring_list () =
   let l = ref [] in
-  Store.master task prog >>= fun t ->
+  prog
+  >>= Store.master task
+  >>= fun t ->
   let%lwt () = Store.iter (t "whole keyring list") (fun k _ ->
       l := (String.concat "/" k)::!l;
       Lwt.return_unit)
@@ -28,16 +28,16 @@ let get_keyring_list () =
   Lwt.return !l
 
 (* register the appropriate permissions *)
-let _ =
-  begin
-    let%lwt all_keyring = get_keyring_list () in
-    Lwt_list.iter_p (fun s -> User.register_permission s) all_keyring
-  end |> Lwt_main.run
+let init_engine () =
+  let%lwt all_keyring = get_keyring_list () in
+  Lwt_list.iter_p (fun s -> User.register_permission s) all_keyring
 
 let _ = User.register_permission "create keyring"
 
 let set_keyring_data : string  -> string -> unit Lwt.t = fun name keyring_data ->
-  Store.master task prog >>= fun t ->
+  prog
+  >>= Store.master task
+  >>= fun t ->
   Store.update (t "setting") [name] keyring_data
 
 

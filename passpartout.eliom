@@ -239,6 +239,7 @@ let require = Auth.require [CasModule.main_service, "cas"; DumbPasswordModule.ma
 
 
 let _ = 
+  let () = Engine.init_engine () |> Lwt_main.run in
   PassPartoutApp.register main_service
     (fun () () ->
        require
