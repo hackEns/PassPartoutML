@@ -61,33 +61,33 @@ let new_keyring name data =
 
 
 [%%client
-	(* site * username * password *)
-	type keyring_entry = string * string * string
+   (* site * username * password *)
+  type keyring_entry = string * string * string
 
 
-	(*let _ = 
-		Js.Unsafe.eval_string "sjcl.random.startCollectors()"*)
-	
-	let replace input output content =
-		(Js.Unsafe.coerce content)##replace(input, output)
+  let _ =
+    let open Lwt in
+    Lwt_js_events.onload () >>= fun _ -> begin
+      Lwt.return (Js.Unsafe.js_expr "sjcl")##.random##startCollectors
+    end
 
-	exception WrongPassword
-	let decipher key data : string =
-		try
-			Js.to_string ((Js.Unsafe.js_expr "sjcl")##decrypt (Js.string key) (Js.string data))
-		with
-		| _ -> raise WrongPassword
+  exception WrongPassword
+  let decipher key data : string =
+    try
+      Js.to_string ((Js.Unsafe.js_expr "sjcl")##decrypt (Js.string key) (Js.string data))
+    with
+    | _ -> raise WrongPassword
 
 
-	let cipher key data : string =
-		Js.to_string ((Js.Unsafe.js_expr "sjcl")##encrypt (Js.string key) (Js.string data))
-	
-	let empty_keyring:(keyring_entry list) = []
+  let cipher key data : string =
+    Js.to_string ((Js.Unsafe.js_expr "sjcl")##encrypt (Js.string key) (Js.string data))
 
-	let load_data:(string -> keyring_entry list) = fun data -> data |> Js.string |> Json.unsafe_input
+  let empty_keyring:(keyring_entry list) = []
 
-	let encode_data d = d |> Json.output |> Js.to_string
+  let load_data:(string -> keyring_entry list) = fun data -> data |> Js.string |> Json.unsafe_input
 
-	let cipher_data password data = data |> encode_data |> cipher password
+  let encode_data d = d |> Json.output |> Js.to_string
+
+  let cipher_data password data = data |> encode_data |> cipher password
 
 ]
